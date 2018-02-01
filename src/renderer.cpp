@@ -226,42 +226,6 @@ void RendererMain<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
     }
 
 
-
-
-    /*glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    glOrtho( -(video->aspect), video->aspect, -1.0, 1.0, 1.0, -1.0 );
-
-
-    glClearColor(0.0f,0.0f,0.0f,1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-
-
-    auto view = registry.persistent<Position, Velocity, Colour>();
-
-    for(auto entity: view)
-    {
-        Position &p = view.get<Position>(entity);
-        //Velocity &v = view.get<Velocity>(entity);
-        Colour &c = view.get<Colour>(entity);
-
-        float x = interpolate(p.buf[i0].x,p.buf[i1].x,alpha);
-        float y = interpolate(p.buf[i0].y,p.buf[i1].y,alpha);
-        glColor3f(c.r/255.0f,c.g/255.0f,c.b/255.0);
-
-
-        glBegin( GL_QUADS );
-            glVertex2f( x-0.04f, y-0.04f );
-            glVertex2f( x+0.04f, y-0.04f );
-            glVertex2f( x+0.04f, y+0.04f );
-            glVertex2f( x-0.04f, y+0.04f );
-        glEnd();
-
-
-    }*/
-
-
     SDL_GL_SwapWindow( video->window );
 }
 

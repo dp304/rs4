@@ -11,12 +11,11 @@
 #include "component.hpp"
 #include "renderer.hpp"
 
-
-
 int main() {
+
     try
     {
-        rs4::Engine<rs4::PlatformSDLGL/*rs4::PlatformTest*/, StateMain> engine;
+        rs4::Engine<rs4::PlatformSDLGL/*rs4::PlatformTest*/, ScreenMain> engine;
         engine.loop();
     }
     catch (std::runtime_error & error)

@@ -10,19 +10,50 @@
 #include "renderer.hpp"
 
 #include "component.hpp"
+#include "event.hpp"
+
+class SoundMain
+{
+public:
+    void update(int dt, std::size_t i1) {}
+    template<class TEvent> void onEvent(const TEvent &) {}
+};
+
+template<>
+inline void SoundMain::onEvent<EventCollision>(const EventCollision & event)
+{
+    fprintf(stderr, "BUMM!\n");
+}
+
+
 
 template <class TPlatform>
-class StateMain
+class ScreenMain
 {
+    class EventDispatcher;
+
+    typedef ControlMain<typename TPlatform::Input> Control;
+    typedef PhysicsMain<EventDispatcher> Physics;
+    typedef SoundMain Sound;
+    typedef RendererMain<typename TPlatform::Video> Renderer;
+
+    struct EventDispatcher : rs4::EventDispatcher<ScreenMain, Sound>
+    {
+        using rs4::EventDispatcher<ScreenMain, Sound>::EventDispatcher;
+    };
+
+
+    EventDispatcher events;
+
     entt::DefaultRegistry registry;
 
-    ControlMain<typename TPlatform::Input> control;
-    PhysicsMain physics;
-    RendererMain<typename TPlatform::Video> renderer;
-
+    Control control;
+    Physics physics;
+    Sound sound;
+    Renderer renderer;
 
 public:
-    StateMain(rs4::Game * game, TPlatform * platform);
+    ScreenMain(rs4::Game * game, TPlatform * platform);
     void update(int dt, std::size_t i1)
     {
         control.update();
@@ -32,13 +63,17 @@ public:
     {
         renderer.render(alpha, i1);
     }
+
+    template <class TEvent>
+    void onEvent(const TEvent&) {}
 };
 
 
 template<class TPlatform>
-StateMain<TPlatform>::StateMain(rs4::Game * game, TPlatform * platform):
+ScreenMain<TPlatform>::ScreenMain(rs4::Game * game, TPlatform * platform):
+        events(this, &sound),
         control(platform->input, &registry),
-        physics(&registry, game),
+        physics(&registry, game, &events),
         renderer(platform->video, &registry)
 {
     registry.prepare<Position,Velocity,Colour,Health>();

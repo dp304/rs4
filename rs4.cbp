@@ -43,6 +43,9 @@
 		<Unit filename="src/component.hpp" />
 		<Unit filename="src/control.cpp" />
 		<Unit filename="src/control.hpp" />
+		<Unit filename="src/event.hpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/physics.cpp" />
 		<Unit filename="src/physics.hpp" />

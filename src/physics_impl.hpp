@@ -1,11 +1,14 @@
 
 #include <glm/glm.hpp>
-
-#include "physics.hpp"
 #include "component.hpp"
+#include "event.hpp"
 
-PhysicsMain::PhysicsMain(entt::DefaultRegistry * registry, rs4::Game * g)
-    :registry(registry),game(g)
+template<class TEventDispatcher>
+PhysicsMain<TEventDispatcher>::PhysicsMain(
+            entt::DefaultRegistry * registry,
+            rs4::Game * g,
+            TEventDispatcher * e
+        ):events(e),registry(registry),game(g)
 {
 
     entt::DefaultRegistry::entity_type ent =
@@ -50,8 +53,8 @@ PhysicsMain::PhysicsMain(entt::DefaultRegistry * registry, rs4::Game * g)
 
 }
 
-
-void PhysicsMain::update(int dt, std::size_t i1) {
+template<class TEventDispatcher>
+void PhysicsMain<TEventDispatcher>::update(int dt, std::size_t i1) {
     /*static bool ki=false;
     if(ki)game->exit();
     ki=true;*/
@@ -103,6 +106,7 @@ void PhysicsMain::update(int dt, std::size_t i1) {
 
         if (coll)
         {
+            events->signal(EventCollision{});
             Colour & c = view.get<Colour>(entity);
             Health & h = view.get<Health>(entity);
             h.hp -= 1;

@@ -1,6 +1,7 @@
 #ifndef RS4_HPP_INCLUDED
 #define RS4_HPP_INCLUDED
 
+#include <tuple>
 #include <cassert>
 #include <stdexcept>
 #include <cstdio>
@@ -198,6 +199,66 @@ inline void StateTest<TPlatform>::render(float alpha, std::size_t idxBuf)
     fprintf(stderr, "%lu\t%f\n",idxBuf,alpha);
 }
 
-}
+/// Game screen (or state) interface.
+class IScreen
+{
+    bool started_;
+    bool paused_;
+
+public:
+    IScreen():started_{false},paused_{false} {}
+    bool isStarted() { return started_; }
+    bool isPaused() { return paused_; }
+
+    void start(std::size_t i1) { started_ = true; onStart(i1); }
+    void pause(std::size_t i1) { paused_ = true; onPause(i1); }
+    void unpause(std::size_t i1) { onUnpause(i1); paused_ = false; }
+    void stop(std::size_t i1) { onStop(i1); started_ = false; }
+
+    virtual void update(int dt, std::size_t i1) = 0;
+    virtual void render(float alpha, std::size_t i1) = 0;
+
+private:
+    virtual void onStart(std::size_t i1) = 0;
+    virtual void onPause(std::size_t i1) {}
+    virtual void onUnpause(std::size_t i1) {}
+    virtual void onStop(std::size_t i1) {}
+
+};
+
+/// Event dispatcher
+template<class ...TObservers>
+class EventDispatcher
+{
+    std::tuple<TObservers*...> observers;
+
+    template<class TEvent, std::size_t Idx = sizeof...(TObservers)>
+    struct ForEach
+    {
+        static inline void signal(decltype(observers) & obs, const TEvent & event)
+        {
+            std::get<sizeof...(TObservers)-Idx>(obs) -> onEvent(event);
+            ForEach<TEvent, Idx-1>::signal(obs, event);
+        }
+    };
+
+    template<class TEvent>
+    struct ForEach<TEvent, 0>
+    {
+        static inline void signal(decltype(observers) & obs, const TEvent & event)
+        {
+        }
+    };
+
+public:
+    EventDispatcher(TObservers* ...obs):observers{obs...} {}
+    template<class TEvent>
+    void signal(const TEvent& event)
+    {
+        ForEach<TEvent>::signal(observers, event);
+    }
+};
+
+} // namespace rs4
 
 #endif // RS4_HPP_INCLUDED
