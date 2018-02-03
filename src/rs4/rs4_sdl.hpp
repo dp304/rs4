@@ -97,7 +97,6 @@ private:
     static void callback(void * userdata, Uint8 * stream, int len)
     {
         AudioSDL * const audio = reinterpret_cast<AudioSDL*>(userdata);
-        fprintf(stderr, "%d\n", audio->pcm_pos);
         if (len > audio->pcm_len - audio->pcm_pos)
         {
             const Uint32 len1 = audio->pcm_len - audio->pcm_pos;
