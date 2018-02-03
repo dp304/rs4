@@ -7,23 +7,10 @@
 
 #include "control.hpp"
 #include "physics.hpp"
+#include "sound.hpp"
 #include "renderer.hpp"
 
 #include "component.hpp"
-#include "event.hpp"
-
-class SoundMain
-{
-public:
-    void update(int dt, std::size_t i1) {}
-    template<class TEvent> void onEvent(const TEvent &) {}
-};
-
-template<>
-inline void SoundMain::onEvent<EventCollision>(const EventCollision & event)
-{
-    fprintf(stderr, "BUMM!\n");
-}
 
 
 
@@ -34,7 +21,7 @@ class ScreenMain
 
     typedef ControlMain<typename TPlatform::Input> Control;
     typedef PhysicsMain<EventDispatcher> Physics;
-    typedef SoundMain Sound;
+    typedef SoundMain<typename TPlatform::Audio> Sound;
     typedef RendererMain<typename TPlatform::Video> Renderer;
 
     struct EventDispatcher : rs4::EventDispatcher<ScreenMain, Sound>
@@ -74,6 +61,7 @@ ScreenMain<TPlatform>::ScreenMain(rs4::Game * game, TPlatform * platform):
         events(this, &sound),
         control(platform->input, &registry),
         physics(&registry, game, &events),
+        sound(platform->audio, &registry),
         renderer(platform->video, &registry)
 {
     registry.prepare<Position,Velocity,Colour,Health>();

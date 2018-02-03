@@ -47,15 +47,18 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="src/main.cpp" />
-		<Unit filename="src/physics.cpp" />
 		<Unit filename="src/physics.hpp" />
+		<Unit filename="src/physics_impl.hpp" />
 		<Unit filename="src/renderer.cpp" />
 		<Unit filename="src/renderer.hpp" />
 		<Unit filename="src/rs4/rs4.hpp" />
+		<Unit filename="src/rs4/rs4_pcm.cpp" />
 		<Unit filename="src/rs4/rs4_sdl.hpp" />
 		<Unit filename="src/rs4/rs4_sdlgl.hpp" />
 		<Unit filename="src/rs4/rs4_shaders.cpp" />
 		<Unit filename="src/rs4/rs4_textures.cpp" />
+		<Unit filename="src/sound.cpp" />
+		<Unit filename="src/sound.hpp" />
 		<Unit filename="src/system.cpp" />
 		<Unit filename="src/system.hpp" />
 		<Extensions>

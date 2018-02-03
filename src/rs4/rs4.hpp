@@ -46,6 +46,7 @@ class Engine
     Game game;
     TPlatform platform;
     typename TPlatform::Clock clock;
+    typename TPlatform::Audio audio;
     typename TPlatform::Video video;
     typename TPlatform::Input input;
     TState<TPlatform> state;
@@ -58,8 +59,9 @@ public:
 
     Engine(const Engine&) = delete;
     Engine():
-        platform(&clock,&video,&input),
+        platform(&clock,&audio,&video,&input),
         clock(&platform),
+        audio(&platform),
         video(&platform),
         input(&platform),
         state(&game, &platform),

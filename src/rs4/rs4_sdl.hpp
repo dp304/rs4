@@ -8,8 +8,12 @@
 namespace rs4
 {
 
+extern const unsigned char pcm_samples[];
+extern const int pcm_samples_len;
+
 class PlatformSDL;
 class ClockSDL;
+class AudioSDL;
 class VideoSDL;
 class InputSDL;
 
@@ -49,6 +53,67 @@ public:
     }
 
     ~ClockSDL() { }
+};
+
+struct AudioSDL
+{
+    SDL_AudioSpec audiospec;
+    SDL_AudioDeviceID device;
+
+    Uint8 * pcm_data;
+    int pcm_len;
+    int pcm_pos;
+
+    template<class TPlatform>
+    AudioSDL(TPlatform *):
+        pcm_data{nullptr},pcm_len{0},pcm_pos{0}
+    {
+        if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
+        {
+            if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) throw std::runtime_error(SDL_GetError());
+        }
+
+        SDL_AudioSpec audiospec0;
+        audiospec0.callback = callback;
+        audiospec0.userdata = this;
+        audiospec0.channels = 1;
+        audiospec0.format = AUDIO_S16;
+        audiospec0.freq = 48000;
+        audiospec0.samples = 2048;
+
+        if ((device = SDL_OpenAudioDevice(nullptr,0,&audiospec0,&audiospec,0)) == 0)
+            throw std::runtime_error(SDL_GetError());
+
+        SDL_PauseAudioDevice(device,1);
+
+
+    }
+    ~AudioSDL()
+    {
+        SDL_PauseAudioDevice(device,1);
+        SDL_CloseAudioDevice(device);
+    }
+private:
+    static void callback(void * userdata, Uint8 * stream, int len)
+    {
+        AudioSDL * const audio = reinterpret_cast<AudioSDL*>(userdata);
+        fprintf(stderr, "%d\n", audio->pcm_pos);
+        if (len > audio->pcm_len - audio->pcm_pos)
+        {
+            const Uint32 len1 = audio->pcm_len - audio->pcm_pos;
+            const Uint32 len2 = len - len1;
+            SDL_memcpy(stream,        audio->pcm_data + audio->pcm_pos, len1);
+            SDL_memset(stream + len1, audio->audiospec.silence,         len2);
+
+            audio->pcm_pos = audio->pcm_len;
+        }
+        else
+        {
+            SDL_memcpy(stream, audio->pcm_data + audio->pcm_pos, len);
+
+            audio->pcm_pos += len;
+        }
+    }
 };
 
 struct VideoSDL
@@ -163,14 +228,16 @@ private:
 struct PlatformSDL
 {
     typedef ClockSDL Clock;
+    typedef AudioSDL Audio;
     typedef VideoSDL Video;
     typedef InputSDL Input;
-    InputSDL * input;
-    VideoSDL * video;
+    Input * input;
+    Audio * audio;
+    Video * video;
     PlatformSDL(const PlatformSDL &) = delete;
-    PlatformSDL(Clock*,Video* v,Input* i):input{i},video{v}
+    PlatformSDL(Clock*,Audio * a, Video * v, Input * i):input{i},audio{a},video{v}
     {
-        if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
+        if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_AUDIO|SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
     }
     void handleEvents(Game * game)
     {

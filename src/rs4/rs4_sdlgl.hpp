@@ -28,12 +28,14 @@ class VideoSDLGL;
 struct PlatformSDLGL
 {
     typedef ClockSDL Clock;
+    typedef AudioSDL Audio;
     typedef VideoSDLGL Video;
     typedef InputSDL Input;
-    VideoSDLGL * video;
-    InputSDL * input;
+    Audio * audio;
+    Video * video;
+    Input * input;
     PlatformSDLGL(const PlatformSDLGL &) = delete;
-    PlatformSDLGL(Clock*,Video* v,Input* i):video{v},input{i}
+    PlatformSDLGL(Clock*, Audio * a, Video * v,Input * i):audio{a},video{v},input{i}
     {
         if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
     }
