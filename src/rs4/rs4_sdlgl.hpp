@@ -38,6 +38,7 @@ struct PlatformSDLGL
     PlatformSDLGL(Clock*, Audio * a, Video * v,Input * i):audio{a},video{v},input{i}
     {
         if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
+        //fprintf(stderr,"%s -- %s\n",SDL_GetPrefPath("rs4","Monster Hunt"), SDL_GetBasePath());
     }
     void handleEvents(Game * game);
 
@@ -54,17 +55,29 @@ struct VideoSDLGL
     static constexpr float maxAspect = 16.0f/9.0f;
     SDL_Window * window;
     SDL_GLContext context;
+
+    Game * game;
+
+    int cfg_x_resolution, cfg_y_resolution;
+
+
     float aspect;
     bool wireframe = false;
 
     VideoSDLGL(const VideoSDLGL &) = delete;
-    VideoSDLGL(PlatformSDLGL *):
-        window{nullptr},aspect{1.0f}
+    VideoSDLGL(PlatformSDLGL *, Game * g):
+        window{nullptr},
+        game{g},
+        aspect{1.0f}
     {
         if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
         {
             if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
         }
+
+        cfg_x_resolution = game->config.get("x_resolution", 800);
+        cfg_y_resolution = game->config.get("y_resolution", 600);
+
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -77,7 +90,7 @@ struct VideoSDLGL
             "rs4",
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
-            1280, 700, SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);
+            cfg_x_resolution, cfg_y_resolution, SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);
         if (window == nullptr) throw std::runtime_error(SDL_GetError());
 
         context = SDL_GL_CreateContext(window);

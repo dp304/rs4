@@ -51,6 +51,7 @@
 		<Unit filename="src/physics_impl.hpp" />
 		<Unit filename="src/renderer.cpp" />
 		<Unit filename="src/renderer.hpp" />
+		<Unit filename="src/rs4/rs4.cpp" />
 		<Unit filename="src/rs4/rs4.hpp" />
 		<Unit filename="src/rs4/rs4_pcm.cpp" />
 		<Unit filename="src/rs4/rs4_sdl.hpp" />

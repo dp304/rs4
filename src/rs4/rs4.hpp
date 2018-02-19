@@ -2,6 +2,8 @@
 #define RS4_HPP_INCLUDED
 
 #include <tuple>
+#include <map>
+#include <string>
 #include <cassert>
 #include <stdexcept>
 #include <cstdio>
@@ -10,6 +12,59 @@
 namespace rs4
 {
 
+// CONFIG
+class Config
+{
+    struct Entry
+    {
+        enum {INVALID, NONE, INTEGER, FLOAT, STRING} type;
+        union
+        {
+            int i;
+            float f;
+        } value;
+        std::string value_s;
+
+        Entry(int val):type{INTEGER},value{.i=val} {}
+        Entry(float val):type{FLOAT},value{.f=val} {}
+        Entry(const std::string & val):type{STRING},value_s{val} {}
+        Entry()=default;
+        operator const int & () const { assert(type==INTEGER); return value.i; }
+        operator const float & () const { assert(type==FLOAT); return value.f; }
+        operator const std::string & () const { assert(type==STRING); return value_s; }
+        void set(int val) { assert(type==INTEGER); value.i=val; }
+        void set(float val) { assert(type==FLOAT); value.f=val; }
+        void set(const std::string & val) { assert(type==STRING); value_s=val; }
+    };
+
+    std::map<std::string, Entry> store;
+    bool dirty=true;
+
+public:
+    bool isDirty() const { return dirty; }
+
+    template<class TValue>
+    const TValue & get(const std::string & key, const TValue & defValue)
+    {
+        if (store.find(key) == store.end() )
+        {
+            store[key] = Entry{defValue};
+        }
+        return store[key];
+    }
+
+    template<class TValue>
+    void set(const std::string & key, const TValue & value)
+    {
+        assert(store.find(key)!=store.end());
+        store[key].set(value);
+        dirty=true;
+    }
+};
+
+
+
+// DEFAULT PLATFORM
 
 class PlatformTest;
 class ClockTest;
@@ -17,6 +72,8 @@ class VideoTest;
 class InputTest;
 
 template<class TPlatform> class StateTest;
+
+// GAME, ENGINE ETC.
 
 class Game
 {
@@ -26,6 +83,8 @@ class Game
     bool exiting;
 
 public:
+    Config config;
+
     Game(const Game&) = delete;
     Game():exiting{false} { }
 
@@ -61,8 +120,8 @@ public:
     Engine():
         platform(&clock,&audio,&video,&input),
         clock(&platform),
-        audio(&platform),
-        video(&platform),
+        audio(&platform, &game),
+        video(&platform, &game),
         input(&platform),
         state(&game, &platform),
         running{false},

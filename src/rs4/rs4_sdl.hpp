@@ -57,6 +57,8 @@ public:
 
 struct AudioSDL
 {
+    Game * game;
+
     SDL_AudioSpec audiospec;
     SDL_AudioDeviceID device;
 
@@ -65,7 +67,8 @@ struct AudioSDL
     int pcm_pos;
 
     template<class TPlatform>
-    AudioSDL(TPlatform *):
+    AudioSDL(TPlatform *, Game * g):
+        game{g},
         pcm_data{nullptr},pcm_len{0},pcm_pos{0}
     {
         if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
@@ -119,10 +122,16 @@ struct VideoSDL
 {
     SDL_Window * window;
     SDL_Renderer * renderer;
+
+    Game * game;
+
+    int cfg_x_resolution, cfg_y_resolution;
+
     VideoSDL(const VideoSDL &) = delete;
-    VideoSDL(PlatformSDL *):
+    VideoSDL(PlatformSDL *, Game * g):
         window{nullptr},
-        renderer{nullptr}
+        renderer{nullptr},
+        game{g}
     {
             if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
             {
@@ -130,11 +139,14 @@ struct VideoSDL
 
             }
 
+            cfg_x_resolution = game->config.get("x_resolution", 800);
+            cfg_y_resolution = game->config.get("y_resolution", 600);
+
             window = SDL_CreateWindow(
                 "rs4",
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
-                800, 600, SDL_WINDOW_RESIZABLE);
+                cfg_x_resolution, cfg_y_resolution, SDL_WINDOW_RESIZABLE);
             if (window == nullptr) throw std::runtime_error(SDL_GetError());
 
             renderer = SDL_CreateRenderer(
