@@ -5,10 +5,10 @@
 #include "entt/entt.hpp"
 #include "rs4/rs4.hpp"
 
-template <class TEventDispatcher>
+template <class TCaster>
 class PhysicsMain
 {
-    TEventDispatcher *events;
+    TCaster *events;
 
     std::random_device rd;
     entt::DefaultRegistry * registry;
@@ -16,7 +16,7 @@ class PhysicsMain
 public:
     PhysicsMain(entt::DefaultRegistry * registry,
                 rs4::Game * g,
-                TEventDispatcher * e);
+                TCaster * e);
     void update(int dt, std::size_t i1);
 private:
     static bool collide(float x0, float & x1, float & v, float wall)

@@ -2,11 +2,24 @@
 
 #include "control.hpp"
 #include "component.hpp"
+#include "event.hpp"
 
-void ControlMain<rs4::InputSDL>::update()
+template<class TCaster>
+class ControlMain<rs4::InputTest, TCaster>
+{
+public:
+    ControlMain(rs4::InputTest * input, entt::DefaultRegistry * registry) {}
+    void update();
+};
+
+template<class TCaster>
+void ControlMain<rs4::InputSDL, TCaster>::update()
 {
     Player &p = registry->get<Player>();
     p.clear();
+
+    if (input->keyPressed[SDL_SCANCODE_ESCAPE])
+        events->signal(EventMenu{});
 
     p.posX = input->mouseX;
     p.posY = input->mouseY;
@@ -27,7 +40,8 @@ void ControlMain<rs4::InputSDL>::update()
 
 // TEST
 
-void ControlMain<rs4::InputTest>::update()
+template<class TCaster>
+void ControlMain<rs4::InputTest, TCaster>::update()
 {
 
 }

@@ -11,26 +11,27 @@
 #include "renderer.hpp"
 
 #include "component.hpp"
+#include "event.hpp"
 
 
 
 template <class TPlatform>
 class ScreenMain
 {
-    class EventDispatcher;
+    class Caster;
 
-    typedef ControlMain<typename TPlatform::Input> Control;
-    typedef PhysicsMain<EventDispatcher> Physics;
+    typedef ControlMain<typename TPlatform::Input, Caster> Control;
+    typedef PhysicsMain<Caster> Physics;
     typedef SoundMain<typename TPlatform::Audio> Sound;
     typedef RendererMain<typename TPlatform::Video> Renderer;
 
-    struct EventDispatcher : rs4::EventDispatcher<ScreenMain, Sound>
+    struct Caster : rs4::Caster<ScreenMain, Sound>
     {
-        using rs4::EventDispatcher<ScreenMain, Sound>::EventDispatcher;
+        using rs4::Caster<ScreenMain, Sound>::Caster;
     };
 
 
-    EventDispatcher events;
+    Caster events;
 
     entt::DefaultRegistry registry;
 
@@ -53,13 +54,15 @@ public:
 
     template <class TEvent>
     void onEvent(const TEvent&) {}
+
+    void onEvent(const EventMenu & e) { fprintf(stderr, "MENU!\n"); }
 };
 
 
 template<class TPlatform>
 ScreenMain<TPlatform>::ScreenMain(rs4::Game * game, TPlatform * platform):
         events(this, &sound),
-        control(platform->input, &registry),
+        control(platform->input, &registry, &events),
         physics(&registry, game, &events),
         sound(platform->audio, &registry),
         renderer(platform->video, &registry)

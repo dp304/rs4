@@ -3,5 +3,6 @@
 
 class EventCollision {};
 
+class EventMenu {};
 
 #endif // EVENT_HPP_INCLUDED

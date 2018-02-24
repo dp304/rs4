@@ -3,11 +3,11 @@
 #include "component.hpp"
 #include "event.hpp"
 
-template<class TEventDispatcher>
-PhysicsMain<TEventDispatcher>::PhysicsMain(
+template<class TCaster>
+PhysicsMain<TCaster>::PhysicsMain(
             entt::DefaultRegistry * registry,
             rs4::Game * g,
-            TEventDispatcher * e
+            TCaster * e
         ):events(e),registry(registry),game(g)
 {
 
@@ -53,8 +53,8 @@ PhysicsMain<TEventDispatcher>::PhysicsMain(
 
 }
 
-template<class TEventDispatcher>
-void PhysicsMain<TEventDispatcher>::update(int dt, std::size_t i1) {
+template<class TCaster>
+void PhysicsMain<TCaster>::update(int dt, std::size_t i1) {
     /*static bool ki=false;
     if(ki)game->exit();
     ki=true;*/

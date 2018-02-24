@@ -41,8 +41,8 @@
 			<Add library="GLEW" />
 		</Linker>
 		<Unit filename="src/component.hpp" />
-		<Unit filename="src/control.cpp" />
 		<Unit filename="src/control.hpp" />
+		<Unit filename="src/control_impl.hpp" />
 		<Unit filename="src/event.hpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

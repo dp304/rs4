@@ -287,9 +287,9 @@ private:
 
 };
 
-/// Event dispatcher
+/// Event broadcaster
 template<class ...TObservers>
-class EventDispatcher
+class Caster
 {
     std::tuple<TObservers*...> observers;
 
@@ -312,7 +312,7 @@ class EventDispatcher
     };
 
 public:
-    EventDispatcher(TObservers* ...obs):observers{obs...} {}
+    Caster(TObservers* ...obs):observers{obs...} {}
     template<class TEvent>
     void signal(const TEvent& event)
     {
