@@ -1,21 +1,21 @@
-#ifndef RENDERER_HPP_INCLUDED
-#define RENDERER_HPP_INCLUDED
+#ifndef PLANET_GRAPHICS_HPP_INCLUDED
+#define PLANET_GRAPHICS_HPP_INCLUDED
 
 
 #include "rs4/rs4_sdlgl.hpp"
-#include "entt/entt.hpp"
+#include "world.hpp"
 
 template <class TVideo>
-class RendererMain
+class GraphicsPlanet
 {
 
 };
 
 template<>
-class RendererMain<rs4::VideoSDLGL>
+class GraphicsPlanet<rs4::VideoSDLGL>
 {
     rs4::VideoSDLGL * video;
-    entt::DefaultRegistry * registry;
+    World * world;
 
     GLuint vbo[1];
     GLuint ebo[1];
@@ -43,7 +43,7 @@ class RendererMain<rs4::VideoSDLGL>
 
 
 public:
-    RendererMain(rs4::VideoSDLGL * video, entt::DefaultRegistry * registry);
+    GraphicsPlanet(rs4::VideoSDLGL * video, World * w);
     //void update(int dt, std::size_t i1) {}
     void render(float alpha, std::size_t i1);
 private:
@@ -58,16 +58,16 @@ private:
 // TEST
 
 template<>
-class RendererMain<rs4::VideoTest>
+class GraphicsPlanet<rs4::VideoTest>
 {
     rs4::VideoTest * video;
-    entt::DefaultRegistry * registry;
+    World * world;
 public:
-    RendererMain(rs4::VideoTest * video, entt::DefaultRegistry * registry):
-        video{video}, registry{registry} {}
+    GraphicsPlanet(rs4::VideoTest * video, World * w):
+        video{video}, world{w} {}
     //void update(int dt, std::size_t i1) {}
     void render(float alpha, std::size_t i1);
 };
 
 
-#endif // RENDERER_HPP_INCLUDED
+#endif // PLANET_GRAPHICS_HPP_INCLUDED

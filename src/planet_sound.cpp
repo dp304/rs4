@@ -1,7 +1,7 @@
-#include "sound.hpp"
+#include "planet_sound.hpp"
 
 
-SoundMain<rs4::AudioSDL>::SoundMain(rs4::AudioSDL * audio, entt::DefaultRegistry * registry)
+SoundPlanet<rs4::AudioSDL>::SoundPlanet(rs4::AudioSDL * audio, World * w)
     :audio{audio}
 {
     audio->pcm_data = (Uint8*) rs4::pcm_samples;
@@ -11,7 +11,7 @@ SoundMain<rs4::AudioSDL>::SoundMain(rs4::AudioSDL * audio, entt::DefaultRegistry
 
 
 template<>
-void SoundMain<rs4::AudioSDL>::onEvent<EventCollision>(const EventCollision & event)
+void SoundPlanet<rs4::AudioSDL>::onEvent<EventCollision>(const EventCollision & event)
 {
     SDL_PauseAudioDevice(audio->device,1);
     audio->pcm_pos = 0;

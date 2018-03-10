@@ -4,6 +4,7 @@
 #include <tuple>
 #include <map>
 #include <string>
+#include <functional>
 #include <cassert>
 #include <stdexcept>
 #include <cstdio>
@@ -71,14 +72,14 @@ class ClockTest;
 class VideoTest;
 class InputTest;
 
-template<class TPlatform> class StateTest;
+template<class TPlatform> class MachineTest;
 
 // GAME, ENGINE ETC.
 
 class Game
 {
     template<class TPlatform,
-             template<class> class TState,
+             template<class> class TMachine,
              int Tdt, int Tminframe, int Tmaxupdates> friend class Engine;
     bool exiting;
 
@@ -98,7 +99,7 @@ public:
 
 
 template<class TPlatform=PlatformTest,
-         template<class> class TState=StateTest,
+         template<class> class TMachine=MachineTest,
          int Tdt=10, int Tminframe=10, int Tmaxupdates=20>
 class Engine
 {
@@ -108,7 +109,7 @@ class Engine
     typename TPlatform::Audio audio;
     typename TPlatform::Video video;
     typename TPlatform::Input input;
-    TState<TPlatform> state;
+    TMachine<TPlatform> machine;
 
     bool running;
 
@@ -123,7 +124,7 @@ public:
         audio(&platform, &game),
         video(&platform, &game),
         input(&platform),
-        state(&game, &platform),
+        machine(&game, &platform),
         running{false},
         idxBuf{0}
     { }
@@ -154,7 +155,7 @@ public:
                 idxBuf = 1-idxBuf;
                 platform.handleEvents(&game);
 
-                state.update(Tdt, idxBuf);
+                machine.update(Tdt, idxBuf);
 
                 updates_left--;
                 t -= Tdt;
@@ -170,7 +171,7 @@ public:
             }
 
             alpha = (double)t/Tdt;
-            state.render(alpha, idxBuf);
+            machine.render(alpha, idxBuf);
         }
         while (true);
 
@@ -241,12 +242,12 @@ public:
 /////////////////
 
 template<class TPlatform>
-class StateTest
+class MachineTest
 {
     Game * game;
     int t;
 public:
-    StateTest(Game * g, TPlatform * platform):game(g),t{0} {};
+    MachineTest(Game * g, TPlatform * platform):game(g),t{0} {};
     void update(int dt, std::size_t idxBuf)
     {
         if ((t+=dt)>10000) game->exit();
@@ -255,7 +256,7 @@ public:
 };
 
 template<class TPlatform>
-inline void StateTest<TPlatform>::render(float alpha, std::size_t idxBuf)
+inline void MachineTest<TPlatform>::render(float alpha, std::size_t idxBuf)
 {
     fprintf(stderr, "%lu\t%f\n",idxBuf,alpha);
 }
@@ -271,21 +272,43 @@ public:
     bool isStarted() { return started_; }
     bool isPaused() { return paused_; }
 
-    void start(std::size_t i1) { started_ = true; onStart(i1); }
-    void pause(std::size_t i1) { paused_ = true; onPause(i1); }
-    void unpause(std::size_t i1) { onUnpause(i1); paused_ = false; }
-    void stop(std::size_t i1) { onStop(i1); started_ = false; }
+    void start(std::size_t i1)
+    {
+        assert(!started_);
+        onStart(i1);
+        started_ = true;
+    }
+    void pause(std::size_t i1) {
+        assert(started_);
+        assert(!paused_);
+        onPause(i1);
+        paused_ = true;
+    }
+    void unpause(std::size_t i1) {
+        assert(started_);
+        assert(paused_);
+        onUnpause(i1);
+        paused_ = false;
+    }
+    void stop(std::size_t i1) {
+        assert(started_);
+        if (paused_) unpause(i1);
+        onStop(i1);
+        started_ = false;
+    }
 
     virtual void update(int dt, std::size_t i1) = 0;
     virtual void render(float alpha, std::size_t i1) = 0;
+
+    virtual const char * debugName() const { return "UNNAMED_STATE"; }
 
 private:
     virtual void onStart(std::size_t i1) = 0;
     virtual void onPause(std::size_t i1) {}
     virtual void onUnpause(std::size_t i1) {}
     virtual void onStop(std::size_t i1) {}
-
 };
+
 
 /// Event broadcaster
 template<class ...TObservers>

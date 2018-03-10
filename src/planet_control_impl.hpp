@@ -1,25 +1,16 @@
 #include "rs4/rs4_sdl.hpp"
 
-#include "control.hpp"
 #include "component.hpp"
 #include "event.hpp"
 
 template<class TCaster>
-class ControlMain<rs4::InputTest, TCaster>
+void ControlPlanet<rs4::InputSDL, TCaster>::update()
 {
-public:
-    ControlMain(rs4::InputTest * input, entt::DefaultRegistry * registry) {}
-    void update();
-};
-
-template<class TCaster>
-void ControlMain<rs4::InputSDL, TCaster>::update()
-{
-    Player &p = registry->get<Player>();
+    Player &p = world->registry.get<Player>();
     p.clear();
 
     if (input->keyPressed[SDL_SCANCODE_ESCAPE])
-        events->signal(EventMenu{});
+        caster->signal(EventMenu{});
 
     p.posX = input->mouseX;
     p.posY = input->mouseY;
@@ -41,7 +32,16 @@ void ControlMain<rs4::InputSDL, TCaster>::update()
 // TEST
 
 template<class TCaster>
-void ControlMain<rs4::InputTest, TCaster>::update()
+class ControlPlanet<rs4::InputTest, TCaster>
+{
+public:
+    ControlPlanet(rs4::InputTest * input, TCaster * c, World * w) {}
+    void update();
+};
+
+
+template<class TCaster>
+void ControlPlanet<rs4::InputTest, TCaster>::update()
 {
 
 }

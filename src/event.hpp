@@ -5,4 +5,8 @@ class EventCollision {};
 
 class EventMenu {};
 
+class EventResume {};
+
+class EventGameOver {};
+
 #endif // EVENT_HPP_INCLUDED

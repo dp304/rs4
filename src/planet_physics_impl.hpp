@@ -4,23 +4,20 @@
 #include "event.hpp"
 
 template<class TCaster>
-PhysicsMain<TCaster>::PhysicsMain(
-            entt::DefaultRegistry * registry,
-            rs4::Game * g,
-            TCaster * e
-        ):events(e),registry(registry),game(g)
+PhysicsPlanet<TCaster>::PhysicsPlanet(TCaster * c, World * w)
+        :caster(c),world(w)
 {
 
     entt::DefaultRegistry::entity_type ent =
-        registry->create(
+        world->registry.create(
             Position{{{0,0},{0,0}}},
             Velocity{0,0},
             Colour{255,255,255},
             Health{30,30}
             );
-    registry->attach<Player>(ent);
-    registry->attach<Camera>(ent, Camera{2.0f, 0.0f});
-    //Camera & cam = registry->get<Camera>();
+    world->registry.attach<Player>(ent);
+    world->registry.attach<Camera>(ent, Camera{2.0f, 0.0f});
+    //Camera & cam = world->registry.get<Camera>();
     //cam.distance = 2.0f;
     //cam.x = 0.0f;
 
@@ -41,7 +38,7 @@ PhysicsMain<TCaster>::PhysicsMain(
         r = 127; //glm::min(g,b);
         //int r = 255, g = 255, b = 255;
         /*entt::DefaultRegistry::entity_type ent =*/
-            registry->create(
+            world->registry.create(
                 Position{{{x,y},{x,y}}},
                 Velocity{vx,vy},
                 Colour{r,g,b},
@@ -54,7 +51,7 @@ PhysicsMain<TCaster>::PhysicsMain(
 }
 
 template<class TCaster>
-void PhysicsMain<TCaster>::update(int dt, std::size_t i1) {
+void PhysicsPlanet<TCaster>::update(int dt, std::size_t i1) {
     /*static bool ki=false;
     if(ki)game->exit();
     ki=true;*/
@@ -63,15 +60,15 @@ void PhysicsMain<TCaster>::update(int dt, std::size_t i1) {
 
 
 
-    auto pent = registry->attachee<Player>();
-    Player &pcontrol = registry->get<Player>();
-    Position &pposition = registry->get<Position>(pent);
-    Velocity &pvelocity = registry->get<Velocity>(pent);
-    Colour &pcolour = registry->get<Colour>(pent);
-    Health &phealth = registry->get<Health>(pent);
+    auto pent = world->registry.attachee<Player>();
+    Player &pcontrol = world->registry.get<Player>();
+    Position &pposition = world->registry.get<Position>(pent);
+    Velocity &pvelocity = world->registry.get<Velocity>(pent);
+    Colour &pcolour = world->registry.get<Colour>(pent);
+    Health &phealth = world->registry.get<Health>(pent);
 
 
-    auto view = registry->persistent<Position, Velocity, Colour, Health>();
+    auto view = world->registry.persistent<Position, Velocity, Colour, Health>();
 
     for(auto entity: view)
     {
@@ -95,7 +92,7 @@ void PhysicsMain<TCaster>::update(int dt, std::size_t i1) {
             phealth.hp -= 1;
             pcolour = {pcolour.r, phealth.hp*pcolour.g/(phealth.hp+1), phealth.hp*pcolour.b/(phealth.hp+1)};
             if (phealth.hp == 0)
-                registry->destroy(pent);
+                world->registry.destroy(pent);
 
         }
 
@@ -106,19 +103,19 @@ void PhysicsMain<TCaster>::update(int dt, std::size_t i1) {
 
         if (coll)
         {
-            events->signal(EventCollision{});
+            caster->signal(EventCollision{});
             Colour & c = view.get<Colour>(entity);
             Health & h = view.get<Health>(entity);
             h.hp -= 1;
             c = {c.r, h.hp*c.g/(h.hp+1), h.hp*c.b/(h.hp+1)};
             if (h.hp == 0)
-                registry->destroy(entity);
+                world->registry.destroy(entity);
         }
         //assert(p.buf[i1].x>0 && p.buf[i1].x<800 && p.buf[i1].y>0 && p.buf[i1].y<600);
     }
-    if (!registry->has<Player>() || registry->empty())
+    if (!world->registry.has<Player>() || world->registry.empty())
     {
-        game->exit();
+        caster->signal(EventGameOver{});
         return;
     }
 
@@ -126,7 +123,7 @@ void PhysicsMain<TCaster>::update(int dt, std::size_t i1) {
     //pposition.buf[i1].y = pposition.buf[i1].y + pcontrol.posY * 0.01f;
     //pposition.buf[i0].x = pposition.buf[i0].x + pcontrol.posX * 0.01f;
     //pposition.buf[i0].y = pposition.buf[i0].y + pcontrol.posY * 0.01f;
-    Camera &cam = registry->get<Camera>();
+    Camera &cam = world->registry.get<Camera>();
     cam.distance -= pcontrol.posY * 0.02f;
     if (cam.distance < 0.0f)  cam.distance = 0.0f;
     if (cam.distance > 10.0f)  cam.distance = 10.0f;

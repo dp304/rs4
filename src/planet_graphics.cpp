@@ -4,12 +4,12 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-#include "renderer.hpp"
+#include "planet_graphics.hpp"
 #include "component.hpp"
 
 
-RendererMain<rs4::VideoSDLGL>::RendererMain(rs4::VideoSDLGL * video, entt::DefaultRegistry * registry):
-        video{video}, registry{registry}
+GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, World * w):
+        video{video}, world{w}
 {
     using rs4::vertex_shader_source;
     using rs4::fragment_shader_source;
@@ -140,7 +140,7 @@ RendererMain<rs4::VideoSDLGL>::RendererMain(rs4::VideoSDLGL * video, entt::Defau
 
 
 
-void RendererMain<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
+void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
 {
 
     std::size_t i0 = 1 - i1;
@@ -155,7 +155,7 @@ void RendererMain<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
     glm::mat4 m_view(1.0f);
     glm::mat4 m_projection = glm::perspective(glm::radians(45.0f), video->aspect, 0.1f, 100.0f);
 
-    Camera &cam = registry->get<Camera>();
+    Camera &cam = world->registry.get<Camera>();
 
     m_view = glm::translate(m_view, glm::vec3(-cam.x, 0.0f ,-cam.distance));
     m_view = glm::rotate(m_view, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -173,10 +173,10 @@ void RendererMain<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
     // PLAYER
-    auto pent = registry->attachee<Player>();
-    Position &pp = registry->get<Position>(pent);
-    Colour &pc = registry->get<Colour>(pent);
-    Velocity &pv = registry->get<Velocity>(pent);
+    auto pent = world->registry.attachee<Player>();
+    Position &pp = world->registry.get<Position>(pent);
+    Colour &pc = world->registry.get<Colour>(pent);
+    Velocity &pv = world->registry.get<Velocity>(pent);
 
     float x = interpolate(pp.buf[i0].x,pp.buf[i1].x,alpha);
     float y = interpolate(pp.buf[i0].y,pp.buf[i1].y,alpha);
@@ -198,7 +198,7 @@ void RendererMain<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
     // ENEMIES
-    auto view = registry->persistent<Position, Velocity, Colour, Monster>();
+    auto view = world->registry.persistent<Position, Velocity, Colour, Monster>();
 
     for(auto entity: view)
     {
@@ -233,11 +233,11 @@ void RendererMain<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
 
 // TEST
 
-void RendererMain<rs4::VideoTest>::render(float alpha, std::size_t idxBuf)
+void GraphicsPlanet<rs4::VideoTest>::render(float alpha, std::size_t idxBuf)
 {
     //std::size_t idxBufOld = 1 - idxBuf;
 
-    auto view = registry->persistent<Position, Velocity, Colour>();
+    auto view = world->registry.persistent<Position, Velocity, Colour>();
 
     int count=0;
     for(auto entity: view)

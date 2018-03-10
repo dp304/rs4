@@ -1,22 +1,18 @@
-#ifndef PHYSICS_HPP_INCLUDED
-#define PHYSICS_HPP_INCLUDED
+#ifndef PLANET_PHYSICS_HPP_INCLUDED
+#define PLANET_PHYSICS_HPP_INCLUDED
 
 #include <random>
-#include "entt/entt.hpp"
-#include "rs4/rs4.hpp"
+#include "world.hpp"
 
 template <class TCaster>
-class PhysicsMain
+class PhysicsPlanet
 {
-    TCaster *events;
+    TCaster * caster;
 
     std::random_device rd;
-    entt::DefaultRegistry * registry;
-    rs4::Game * game;
+    World * world;
 public:
-    PhysicsMain(entt::DefaultRegistry * registry,
-                rs4::Game * g,
-                TCaster * e);
+    PhysicsPlanet(TCaster * c, World * w);
     void update(int dt, std::size_t i1);
 private:
     static bool collide(float x0, float & x1, float & v, float wall)
@@ -32,6 +28,6 @@ private:
 };
 
 
-#include "physics_impl.hpp"
+#include "planet_physics_impl.hpp"
 
-#endif // PHYSICS_HPP_INCLUDED
+#endif // PLANET_PHYSICS_HPP_INCLUDED
