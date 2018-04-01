@@ -43,6 +43,10 @@
 		<Unit filename="src/component.hpp" />
 		<Unit filename="src/event.hpp" />
 		<Unit filename="src/main.cpp" />
+		<Unit filename="src/menu_control.hpp" />
+		<Unit filename="src/menu_control_impl.hpp" />
+		<Unit filename="src/menu_graphics.cpp" />
+		<Unit filename="src/menu_graphics.hpp" />
 		<Unit filename="src/planet_control.hpp" />
 		<Unit filename="src/planet_control_impl.hpp" />
 		<Unit filename="src/planet_graphics.cpp" />

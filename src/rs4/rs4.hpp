@@ -113,8 +113,6 @@ class Engine
 
     bool running;
 
-    std::size_t idxBuf;
-
 public:
 
     Engine(const Engine&) = delete;
@@ -125,8 +123,7 @@ public:
         video(&platform, &game),
         input(&platform),
         machine(&game, &platform),
-        running{false},
-        idxBuf{0}
+        running{false}
     { }
 
     void loop()
@@ -137,6 +134,8 @@ public:
 
         assert(!running&&"Re-entry into loop");
         running = true;
+
+        machine.start();
 
         clock.reset();
         t = 0;
@@ -152,10 +151,9 @@ public:
             updates_left = Tmaxupdates;
             while (t >= Tdt && updates_left > 0 && !game.exiting)
             {
-                idxBuf = 1-idxBuf;
                 platform.handleEvents(&game);
 
-                machine.update(Tdt, idxBuf);
+                machine.update(Tdt);
 
                 updates_left--;
                 t -= Tdt;
@@ -171,15 +169,18 @@ public:
             }
 
             alpha = (double)t/Tdt;
-            machine.render(alpha, idxBuf);
+            machine.render(alpha);
         }
         while (true);
 
+        machine.stop();
         running = false;
 
     }
     ~Engine() {}
 };
+
+// TEST
 
 struct PlatformTest
 {
@@ -228,6 +229,8 @@ public:
     {
         f = stderr;
     }
+    void startRender() {}
+    void endRender() {}
     ~VideoTest() {}
 };
 
@@ -248,17 +251,17 @@ class MachineTest
     int t;
 public:
     MachineTest(Game * g, TPlatform * platform):game(g),t{0} {};
-    void update(int dt, std::size_t idxBuf)
+    void update(int dt)
     {
         if ((t+=dt)>10000) game->exit();
     }
-    void render(float alpha, std::size_t idxBuf);
+    void render(float alpha);
 };
 
 template<class TPlatform>
-inline void MachineTest<TPlatform>::render(float alpha, std::size_t idxBuf)
+inline void MachineTest<TPlatform>::render(float alpha)
 {
-    fprintf(stderr, "%lu\t%f\n",idxBuf,alpha);
+    fprintf(stderr, "\t%f\n",alpha);
 }
 
 /// Game screen (or state) interface.
@@ -272,41 +275,41 @@ public:
     bool isStarted() { return started_; }
     bool isPaused() { return paused_; }
 
-    void start(std::size_t i1)
+    void start()
     {
         assert(!started_);
-        onStart(i1);
+        onStart();
         started_ = true;
     }
-    void pause(std::size_t i1) {
+    void pause() {
         assert(started_);
         assert(!paused_);
-        onPause(i1);
+        onPause();
         paused_ = true;
     }
-    void unpause(std::size_t i1) {
+    void unpause() {
         assert(started_);
         assert(paused_);
-        onUnpause(i1);
+        onUnpause();
         paused_ = false;
     }
-    void stop(std::size_t i1) {
+    void stop() {
         assert(started_);
-        if (paused_) unpause(i1);
-        onStop(i1);
+        if (paused_) unpause();
+        onStop();
         started_ = false;
     }
 
-    virtual void update(int dt, std::size_t i1) = 0;
-    virtual void render(float alpha, std::size_t i1) = 0;
+    virtual void update(int dt) = 0;
+    virtual void render(float alpha) = 0;
 
     virtual const char * debugName() const { return "UNNAMED_STATE"; }
 
 private:
-    virtual void onStart(std::size_t i1) = 0;
-    virtual void onPause(std::size_t i1) {}
-    virtual void onUnpause(std::size_t i1) {}
-    virtual void onStop(std::size_t i1) {}
+    virtual void onStart() = 0;
+    virtual void onPause() {}
+    virtual void onUnpause() {}
+    virtual void onStop() {}
 };
 
 

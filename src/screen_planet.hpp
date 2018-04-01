@@ -36,18 +36,18 @@ class ScreenPlanet: public rs4::IScreen
 
 public:
     ScreenPlanet(TPlatform * platform, TMachine * m, World * w);
-    void update(int dt, std::size_t i1) final
+    void update(int dt) final
     {
         control.update();
-        physics.update(dt, i1);
+        physics.update(dt);
     }
-    void render(float alpha, std::size_t i1) final
+    void render(float alpha) final
     {
-        graphics.render(alpha, i1);
+        graphics.render(alpha);
     }
 
 private:
-    void onStart(std::size_t i1) final {}
+    void onStart() final {}
 };
 
 

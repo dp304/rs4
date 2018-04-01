@@ -130,6 +130,8 @@ struct VideoSDLGL
             glViewport(0,0,w,h);
         }
     }
+    void startRender() {}
+    void endRender() { SDL_GL_SwapWindow( window ); }
     ~VideoSDLGL()
     {
         SDL_GL_DeleteContext(context);

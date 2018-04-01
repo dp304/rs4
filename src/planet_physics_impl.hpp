@@ -51,12 +51,14 @@ PhysicsPlanet<TCaster>::PhysicsPlanet(TCaster * c, World * w)
 }
 
 template<class TCaster>
-void PhysicsPlanet<TCaster>::update(int dt, std::size_t i1) {
+void PhysicsPlanet<TCaster>::update(int dt) {
     /*static bool ki=false;
     if(ki)game->exit();
     ki=true;*/
 
-    std::size_t i0 = 1 - i1;
+    world->swapI();
+    const std::size_t i1 = world->i1;
+    const std::size_t i0 = 1 - i1;
 
 
 

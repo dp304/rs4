@@ -45,7 +45,7 @@ class GraphicsPlanet<rs4::VideoSDLGL>
 public:
     GraphicsPlanet(rs4::VideoSDLGL * video, World * w);
     //void update(int dt, std::size_t i1) {}
-    void render(float alpha, std::size_t i1);
+    void render(float alpha);
 private:
     static float interpolate(float x0, float x1, float alpha)
     {
@@ -66,7 +66,7 @@ public:
     GraphicsPlanet(rs4::VideoTest * video, World * w):
         video{video}, world{w} {}
     //void update(int dt, std::size_t i1) {}
-    void render(float alpha, std::size_t i1);
+    void render(float alpha);
 };
 
 

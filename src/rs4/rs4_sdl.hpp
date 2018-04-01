@@ -156,6 +156,8 @@ struct VideoSDL
             if (renderer == nullptr) throw std::runtime_error(SDL_GetError());
 
     }
+    void startRender() {}
+    void endRender() { SDL_RenderPresent(renderer); }
     ~VideoSDL()
     {
         SDL_DestroyRenderer(renderer);

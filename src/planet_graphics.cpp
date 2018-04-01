@@ -140,10 +140,11 @@ GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, World *
 
 
 
-void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
+void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha)
 {
 
-    std::size_t i0 = 1 - i1;
+    const std::size_t i1 = world->i1;
+    const std::size_t i0 = 1 - i1;
 
     glClearColor(0.0f, 0.0f, 0.3f, 1.0f);//űr
     glClear(GL_COLOR_BUFFER_BIT);
@@ -225,15 +226,13 @@ void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha, std::size_t i1)
 
     }
 
-
-    SDL_GL_SwapWindow( video->window );
 }
 
 
 
 // TEST
 
-void GraphicsPlanet<rs4::VideoTest>::render(float alpha, std::size_t idxBuf)
+void GraphicsPlanet<rs4::VideoTest>::render(float alpha)
 {
     //std::size_t idxBufOld = 1 - idxBuf;
 

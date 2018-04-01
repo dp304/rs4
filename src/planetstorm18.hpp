@@ -9,6 +9,7 @@
 #include "event.hpp"
 
 #include "screen_planet.hpp"
+#include "screen_menu.hpp"
 
 
 template<class TPlatform>
@@ -16,14 +17,13 @@ class PlanetStorm18
 {
     World world;
 
+    typename TPlatform::Video * video;
     rs4::Game * game;
 
-    //ScreenMenu<TPlatform> screen_menu;
+    ScreenMenu<TPlatform, PlanetStorm18> screen_menu;
     ScreenPlanet<TPlatform, PlanetStorm18> screen_planet;
 
     //...
-
-
 
     rs4::IScreen * currentScreen = &screen_planet;
 
@@ -41,11 +41,12 @@ class PlanetStorm18
 
 public:
     PlanetStorm18(rs4::Game * g, TPlatform * p):
+        video{p->video},
         game{g},
-        //screen_menu(g,p,this),
+        screen_menu(p,this),
         screen_planet(p,this,&world) {}
 
-    void update(int dt, std::size_t i1)
+    void update(int dt)
     {
         while (transition_priority > 0)
         {
@@ -56,19 +57,57 @@ public:
 
         //if (!currentScreen->isPaused())
         {
-            currentScreen->update(dt, i1);
+            currentScreen->update(dt);
         }
     }
 
-    void render(float alpha, std::size_t i1)
+    void render(float alpha)
     {
-        currentScreen->render(alpha, i1);
+        video->startRender();
+        currentScreen->render(alpha);
+        video->endRender();
+    }
+
+    void start()
+    {
+        currentScreen->start();
+    }
+
+    void stop()
+    {
+        currentScreen->stop();
+        // TODO stop all screens
     }
 
     template <class TEvent>
     void onEvent(const TEvent&) {}
 
-    void onEvent(const EventMenu & e) { fprintf(stderr, "MENU!\n"); }
+    void onEvent(const EventMenu & e)
+    {
+        transition(10,
+            [this](rs4::IScreen * s)
+            {
+                screen_menu.setSubscreen(s);
+                s->pause();
+                screen_menu.start();
+                return &screen_menu;
+            }
+        );
+    }
+
+    void onEvent(const EventResume & e)
+    {
+        transition(10,
+            [this](rs4::IScreen *)
+            {
+                rs4::IScreen * s2 = screen_menu.getSubscreen();
+                screen_menu.stop();
+                screen_menu.setSubscreen(nullptr);
+                s2->unpause();
+                return s2;
+            }
+        );
+    }
 
     void onEvent(const EventGameOver & e) { game->exit(); }
 

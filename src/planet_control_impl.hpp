@@ -1,5 +1,3 @@
-#include "rs4/rs4_sdl.hpp"
-
 #include "component.hpp"
 #include "event.hpp"
 
