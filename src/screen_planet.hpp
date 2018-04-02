@@ -47,7 +47,11 @@ public:
     }
 
 private:
-    void onStart() final {}
+    void onStart() final {control.start();}
+    void onStop() final {}
+    void onPause() final {}
+    void onUnpause() final {control.unpause();}
+
 };
 
 

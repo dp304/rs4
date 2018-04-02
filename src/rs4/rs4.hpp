@@ -307,9 +307,9 @@ public:
 
 private:
     virtual void onStart() = 0;
-    virtual void onPause() {}
-    virtual void onUnpause() {}
-    virtual void onStop() {}
+    virtual void onPause() = 0;
+    virtual void onUnpause() = 0;
+    virtual void onStop() = 0;
 };
 
 

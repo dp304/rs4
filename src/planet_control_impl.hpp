@@ -30,15 +30,6 @@ void ControlPlanet<rs4::InputSDL, TCaster>::update()
 // TEST
 
 template<class TCaster>
-class ControlPlanet<rs4::InputTest, TCaster>
-{
-public:
-    ControlPlanet(rs4::InputTest * input, TCaster * c, World * w) {}
-    void update();
-};
-
-
-template<class TCaster>
 void ControlPlanet<rs4::InputTest, TCaster>::update()
 {
 

@@ -12,15 +12,6 @@ void ControlMenu<rs4::InputSDL, TCaster>::update()
 // TEST
 
 template<class TCaster>
-class ControlMenu<rs4::InputTest, TCaster>
-{
-public:
-    ControlMenu(rs4::InputTest * input, TCaster * c) {}
-    void update();
-};
-
-
-template<class TCaster>
 void ControlMenu<rs4::InputTest, TCaster>::update()
 {
 

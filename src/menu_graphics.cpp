@@ -14,7 +14,7 @@ void GraphicsMenu<rs4::VideoSDLGL>::render(float alpha)
 
     if (subscreen != nullptr)
     {
-        subscreen->render(alpha);
+        subscreen->render(1.0f);
 
         /*glEnable(GL_BLEND);
         glClearColor(0.5f, 0.5f, 0.5f, 0.2f);

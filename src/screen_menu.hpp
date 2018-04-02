@@ -33,7 +33,10 @@ public:
     void setSubscreen(rs4::IScreen * s) { subscreen=s; control.setSubscreen(s); graphics.setSubscreen(s); }
     rs4::IScreen * getSubscreen() const { return subscreen; }
 private:
-    void onStart() final {}
+    void onStart() final {control.start();}
+    void onStop() final {}
+    void onPause() final {}
+    void onUnpause() final {control.unpause();}
 };
 
 template<class TPlatform, class TMachine>

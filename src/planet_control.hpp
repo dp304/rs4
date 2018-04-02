@@ -18,7 +18,19 @@ class ControlPlanet<rs4::InputSDL, TCaster>
     World * world;
 public:
     ControlPlanet(rs4::InputSDL * input, TCaster * c, World * w):
-        caster{c}, input{input}, world{w} {SDL_SetRelativeMouseMode(SDL_TRUE);}
+        caster{c}, input{input}, world{w} {}
+    void update();
+    void start() {SDL_SetRelativeMouseMode(SDL_TRUE);}
+    void unpause() {SDL_SetRelativeMouseMode(SDL_TRUE);}
+};
+
+// TEST
+
+template<class TCaster>
+class ControlPlanet<rs4::InputTest, TCaster>
+{
+public:
+    ControlPlanet(rs4::InputTest * input, TCaster * c, World * w) {}
     void update();
 };
 
