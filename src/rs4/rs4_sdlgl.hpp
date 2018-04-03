@@ -85,6 +85,8 @@ struct VideoSDLGL
             throw std::runtime_error(SDL_GetError());
         if (SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1) != 0)
             throw std::runtime_error(SDL_GetError());
+        /*if (SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8) != 0)
+            throw std::runtime_error(SDL_GetError());*/
 
         window = SDL_CreateWindow(
             "rs4",
@@ -130,6 +132,56 @@ struct VideoSDLGL
             glViewport(0,0,w,h);
         }
     }
+
+    static GLuint makeShaderProgram(const GLchar ** vs_src,
+                                    GLsizei vs_src_n,
+                                    const GLchar ** fs_src,
+                                    GLsizei fs_src_n)
+    {
+        GLint success;
+        GLuint vshader, fshader, shader_program;
+
+        vshader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vshader, vs_src_n, vs_src, nullptr);
+        glCompileShader(vshader);
+        glGetShaderiv(vshader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char log[512];
+            glGetShaderInfoLog(vshader, 512, NULL, log);
+            throw std::runtime_error(std::string("Vertex shader compilation failed:\n")+log);
+        }
+
+
+        fshader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fshader, fs_src_n, fs_src, nullptr);
+        glCompileShader(fshader);
+        glGetShaderiv(fshader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char log[512];
+            glGetShaderInfoLog(fshader, 512, NULL, log);
+            throw std::runtime_error(std::string("Fragment shader compilation failed:\n")+log);
+        }
+
+        shader_program = glCreateProgram();
+        glAttachShader(shader_program, vshader);
+        glAttachShader(shader_program, fshader);
+        glLinkProgram(shader_program);
+        glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            char log[512];
+            glGetProgramInfoLog(shader_program, 512, NULL, log);
+            throw std::runtime_error(std::string("Shader program linking failed:\n")+log);
+        }
+
+        glDeleteShader(vshader);
+        glDeleteShader(fshader);
+
+        return shader_program;
+    }
+
     void startRender() {}
     void endRender() { SDL_GL_SwapWindow( window ); }
     ~VideoSDLGL()

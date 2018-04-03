@@ -21,44 +21,9 @@ GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, World *
 
     // SHADERS
 
-    int success;
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vshader, 1, vertex_shader_source, nullptr);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        char log[512];
-        glGetShaderInfoLog(vshader, 512, NULL, log);
-        throw std::runtime_error(std::string("Vertex shader compilation failed:\n")+log);
-    }
+    shader_program = video->makeShaderProgram(vertex_shader_source,1,
+                                              fragment_shader_source,1);
 
-
-    fshader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fshader, 1, fragment_shader_source, nullptr);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        char log[512];
-        glGetShaderInfoLog(fshader, 512, NULL, log);
-        throw std::runtime_error(std::string("Fragment shader compilation failed:\n")+log);
-    }
-
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vshader);
-    glAttachShader(shader_program, fshader);
-    glLinkProgram(shader_program);
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        char log[512];
-        glGetShaderInfoLog(shader_program, 512, NULL, log);
-        throw std::runtime_error(std::string("Shader program linking failed:\n")+log);
-    }
-
-    glDeleteShader(vshader);
-    glDeleteShader(fshader);
 
     // VAO, VBO, EBO
 

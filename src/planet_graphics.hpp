@@ -35,7 +35,7 @@ class GraphicsPlanet<rs4::VideoSDLGL>
     };
     GLuint textures[3];
 
-    GLuint vshader, fshader, shader_program;
+    GLuint shader_program;
 
     // uniform locations
     GLint u_vertex_colour;

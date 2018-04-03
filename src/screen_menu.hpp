@@ -25,6 +25,7 @@ public:
     void update(int dt) final
     {
         control.update();
+        graphics.update(dt);
     }
     void render(float alpha) final
     {
@@ -33,7 +34,7 @@ public:
     void setSubscreen(rs4::IScreen * s) { subscreen=s; control.setSubscreen(s); graphics.setSubscreen(s); }
     rs4::IScreen * getSubscreen() const { return subscreen; }
 private:
-    void onStart() final {control.start();}
+    void onStart() final {control.start();graphics.start();}
     void onStop() final {}
     void onPause() final {}
     void onUnpause() final {control.unpause();}
