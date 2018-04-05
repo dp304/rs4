@@ -2,6 +2,7 @@
 #define MENU_CONTROL_HPP_INCLUDED
 
 #include "rs4/rs4_sdl.hpp"
+#include "ui.hpp"
 
 
 template <class TInput, class TCaster>
@@ -17,13 +18,14 @@ class ControlMenu<rs4::InputSDL, TCaster>
     rs4::InputSDL * input;
     //World * world;
     rs4::IScreen * subscreen = nullptr;
+    UIMenu * ui;
 public:
-    ControlMenu(rs4::InputSDL * input, TCaster * c):
-        caster{c}, input{input} { }
+    ControlMenu(rs4::InputSDL * input, TCaster * c, UIMenu * ui):
+        caster{c}, input{input}, ui{ui} { }
     void update();
     void setSubscreen(rs4::IScreen * s) { subscreen = s; }
-    void start() {SDL_SetRelativeMouseMode(SDL_FALSE);}
-    void unpause() {SDL_SetRelativeMouseMode(SDL_FALSE);}
+    void start() { input->uiOn(); }
+    void unpause() { input->uiOn(); }
 };
 
 

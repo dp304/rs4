@@ -3,6 +3,7 @@
 
 
 #include "rs4/rs4_sdlgl.hpp"
+#include "ui.hpp"
 
 
 template <class TVideo>
@@ -16,6 +17,8 @@ class GraphicsMenu<rs4::VideoSDLGL>
 {
     rs4::VideoSDLGL * video;
     rs4::IScreen * subscreen = nullptr;
+
+    UIMenu * ui;
 
     static const char * vshader_src;
     static const char * fshader_src;
@@ -43,12 +46,14 @@ class GraphicsMenu<rs4::VideoSDLGL>
     int phase=0;
 
 public:
-    GraphicsMenu(rs4::VideoSDLGL * video);
+    GraphicsMenu(rs4::VideoSDLGL * video, UIMenu * ui);
     //void update(int dt) {}
     void start() {phase=0;}
     void update(std::size_t dt);
     void render(float alpha);
     void setSubscreen(rs4::IScreen * s) { subscreen = s; }
+
+    ~GraphicsMenu();
 };
 
 

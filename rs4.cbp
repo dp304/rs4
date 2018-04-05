@@ -33,6 +33,7 @@
 			<Add option="-D_REENTRANT" />
 			<Add directory="/usr/include/SDL2" />
 			<Add directory="/home/peti/src/entt/src" />
+			<Add directory="/home/peti/src/nuklear" />
 			<Add directory="src" />
 		</Compiler>
 		<Linker>
@@ -65,6 +66,7 @@
 		<Unit filename="src/rs4/rs4_textures.cpp" />
 		<Unit filename="src/screen_menu.hpp" />
 		<Unit filename="src/screen_planet.hpp" />
+		<Unit filename="src/ui.hpp" />
 		<Unit filename="src/world.hpp" />
 		<Extensions>
 			<code_completion />

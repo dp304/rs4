@@ -1,6 +1,7 @@
 #ifndef SCREEN_MENU_HPP_INCLUDED
 #define SCREEN_MENU_HPP_INCLUDED
 
+#include "ui.hpp"
 
 #include "menu_control.hpp"
 #include "menu_graphics.hpp"
@@ -16,6 +17,8 @@ class ScreenMenu : public rs4::IScreen
     Caster caster;
 
     rs4::IScreen * subscreen;
+
+    UIMenu ui;
 
     Control control;
     Graphics graphics;
@@ -44,8 +47,8 @@ template<class TPlatform, class TMachine>
 ScreenMenu<TPlatform,TMachine>::ScreenMenu(TPlatform * p, TMachine *m):
     caster(m),
     subscreen(nullptr),
-    control(p->input, &caster),
-    graphics(p->video)
+    control(p->input, &caster, &ui),
+    graphics(p->video, &ui)
 {
 }
 

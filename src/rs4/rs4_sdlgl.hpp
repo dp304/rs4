@@ -55,6 +55,7 @@ struct VideoSDLGL
     static constexpr float maxAspect = 16.0f/9.0f;
     SDL_Window * window;
     SDL_GLContext context;
+    int width, height;
 
     Game * game;
 
@@ -104,32 +105,31 @@ struct VideoSDLGL
         GLenum glewStatus = glewInit();
         if (glewStatus != GLEW_OK) throw std::runtime_error((char*)glewGetErrorString(glewStatus));
 
-        int width, height;
         SDL_GetWindowSize(window, &width, &height);
-        updateAspect(width, height);
+        updateAspect();
 
     }
 
-    void updateAspect(int w, int h)
+    void updateAspect()
     {
-        aspect = (float)w/h;
+        aspect = (float)width/height;
         if (aspect > maxAspect)
         {
             aspect = maxAspect;
-            int w1 = std::lround(maxAspect * h);
-            glViewport((w-w1)/2, 0,
-                       w1, h);
+            int w1 = std::lround(maxAspect * height);
+            glViewport((width-w1)/2, 0,
+                       w1, height);
         }
         else if (aspect < minAspect)
         {
             aspect = minAspect;
-            int h1 = std::lround(w / minAspect);
-            glViewport(0,(h-h1)/2,
-                       w, h1);
+            int h1 = std::lround(width / minAspect);
+            glViewport(0,(height-h1)/2,
+                       width, h1);
         }
         else
         {
-            glViewport(0,0,w,h);
+            glViewport(0,0,width,height);
         }
     }
 
@@ -209,7 +209,9 @@ inline void PlatformSDLGL::handleEvents(Game * game)
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
-                video->updateAspect(event.window.data1,event.window.data2);
+                video->width = event.window.data1;
+                video->height = event.window.data2;
+                video->updateAspect();
             }
             break;
         }

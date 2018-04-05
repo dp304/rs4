@@ -20,8 +20,8 @@ public:
     ControlPlanet(rs4::InputSDL * input, TCaster * c, World * w):
         caster{c}, input{input}, world{w} {}
     void update();
-    void start() {SDL_SetRelativeMouseMode(SDL_TRUE);}
-    void unpause() {SDL_SetRelativeMouseMode(SDL_TRUE);}
+    void start() { input->uiOff(); }
+    void unpause() { input->uiOff(); }
 };
 
 // TEST

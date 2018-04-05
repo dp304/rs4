@@ -173,6 +173,12 @@ struct InputSDL
     std::vector<bool> mouseDown;
     std::vector<bool> mousePressed;
     int mouseX, mouseY;
+
+    static const int MAX_UI_EVENTS = 1024;
+    SDL_Event ui_events[MAX_UI_EVENTS];
+    std::size_t ui_event_n;
+    bool ui_enabled;
+
     template<class TPlatform>
     InputSDL(TPlatform * platform)
     {
@@ -184,6 +190,8 @@ struct InputSDL
         mouseDown.resize(5, false);
         mousePressed.resize(5, false);
         mouseX = mouseY = 0;
+
+        uiOff();
     }
     void clear()
     {
@@ -193,6 +201,15 @@ struct InputSDL
     }
     void processEvent(SDL_Event * event) {
         int button;
+
+        if (ui_enabled &&
+            ui_event_n < MAX_UI_EVENTS &&
+            event->type >= SDL_KEYDOWN &&
+            event->type <= SDL_MOUSEWHEEL)
+        {
+            ui_events[ui_event_n++] = *event;
+        }
+
         switch (event->type)
         {
         case SDL_MOUSEMOTION:
@@ -220,6 +237,11 @@ struct InputSDL
             break;
         }
     }
+
+
+    void uiOn() { SDL_SetRelativeMouseMode(SDL_FALSE); ui_enabled = true;  ui_event_n = 0; }
+    void uiOff() { SDL_SetRelativeMouseMode(SDL_TRUE); ui_enabled = false; ui_event_n = 0; }
+    void uiFlush() { ui_event_n = 0; }
 
     ~InputSDL()
     {
