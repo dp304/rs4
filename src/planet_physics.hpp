@@ -12,7 +12,7 @@ class PhysicsPlanet
     std::random_device rd;
     World * world;
 public:
-    PhysicsPlanet(TCaster * c, World * w);
+    PhysicsPlanet(TCaster * c, rs4::Game * g, World * w);
     void update(int dt);
 private:
     static bool collide(float x0, float & x1, float & v, float wall)

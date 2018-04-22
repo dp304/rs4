@@ -8,7 +8,7 @@
 #include "component.hpp"
 
 
-GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, World * w):
+GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Game * g, World * w):
         video{video}, world{w}
 {
     using rs4::vertex_shader_source;

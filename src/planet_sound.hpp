@@ -15,8 +15,10 @@ template<>
 class SoundPlanet<rs4::AudioSDL>
 {
     rs4::AudioSDL * audio;
+
+    bool on = false;
 public:
-    SoundPlanet(rs4::AudioSDL * audio, World * w);
+    SoundPlanet(rs4::AudioSDL * audio, rs4::Game * g, World * w);
     void update(int dt, std::size_t i1) {}
     template<class TEvent> void onEvent(const TEvent &) {}
 };

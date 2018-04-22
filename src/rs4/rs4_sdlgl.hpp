@@ -28,17 +28,18 @@ class VideoSDLGL;
 struct PlatformSDLGL
 {
     typedef ClockSDL Clock;
+    typedef DiskSDL Disk;
     typedef AudioSDL Audio;
     typedef VideoSDLGL Video;
     typedef InputSDL Input;
+    Disk * disk;
     Audio * audio;
     Video * video;
     Input * input;
     PlatformSDLGL(const PlatformSDLGL &) = delete;
-    PlatformSDLGL(Clock*, Audio * a, Video * v,Input * i):audio{a},video{v},input{i}
+    PlatformSDLGL(Clock*, Disk * d, Audio * a, Video * v,Input * i):disk{d},audio{a},video{v},input{i}
     {
         if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
-        //fprintf(stderr,"%s -- %s\n",SDL_GetPrefPath("rs4","Monster Hunt"), SDL_GetBasePath());
     }
     void handleEvents(Game * game);
 
@@ -76,9 +77,11 @@ struct VideoSDLGL
             if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
         }
 
-        cfg_x_resolution = game->config.get("x_resolution", 800);
-        cfg_y_resolution = game->config.get("y_resolution", 600);
+        //cfg_x_resolution = game->config.get("resolution_x");
+        //cfg_y_resolution = game->config.get("resolution_y");
 
+        game->config.subscribe("resolution_x", &cfg_x_resolution);
+        game->config.subscribe("resolution_y", &cfg_y_resolution);
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -90,7 +93,7 @@ struct VideoSDLGL
             throw std::runtime_error(SDL_GetError());*/
 
         window = SDL_CreateWindow(
-            "rs4",
+            game->meta.title.c_str(),
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             cfg_x_resolution, cfg_y_resolution, SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);

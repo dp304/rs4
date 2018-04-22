@@ -17,7 +17,7 @@ class ControlPlanet<rs4::InputSDL, TCaster>
     rs4::InputSDL * input;
     World * world;
 public:
-    ControlPlanet(rs4::InputSDL * input, TCaster * c, World * w):
+    ControlPlanet(rs4::InputSDL * input, TCaster * c, rs4::Game * g, World * w):
         caster{c}, input{input}, world{w} {}
     void update();
     void start() { input->uiOff(); }

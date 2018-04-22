@@ -13,10 +13,12 @@ extern const int pcm_samples_len;
 
 class PlatformSDL;
 class ClockSDL;
+class DiskSDL;
 class AudioSDL;
 class VideoSDL;
 class InputSDL;
 
+class StreamSDLFile;
 
 class ClockSDL
 {
@@ -53,6 +55,154 @@ public:
     }
 
     ~ClockSDL() { }
+};
+
+// STREAM
+
+class StreamSDLFile : public IStream
+{
+public:
+    // TODO &&
+    StreamSDLFile(const std::string & n, bool b = true):_name{n},_bin{b} {}
+private:
+    std::string _name;
+    bool _bin;
+    SDL_RWops * rwops = nullptr;
+
+    void onOpenr() final
+    {
+        rwops = SDL_RWFromFile(_name.c_str(), _bin ? "rb" : "r");
+        if (rwops == nullptr)
+            throw std::runtime_error(std::string("Error opening \"") + _name + "\": " + SDL_GetError());
+
+        long long s = SDL_RWsize(rwops);
+        if (s==-1)
+        {
+            const char * err = SDL_GetError();
+            if (err[0]!='\0')
+                throw std::runtime_error(std::string("Error getting size of \"") + _name + "\": " + err);
+        }
+        setSize(s);
+    }
+
+    void onOpenw() final
+    {
+        rwops = SDL_RWFromFile(_name.c_str(), _bin ? "wb" : "w");
+        if (rwops == nullptr)
+            throw std::runtime_error(std::string("Error opening \"") + _name + "\": " + SDL_GetError());
+    }
+
+    void onClose() final
+    {
+        if (SDL_RWclose(rwops) != 0)
+            throw std::runtime_error(std::string("Error closing \"") + _name + "\": " + SDL_GetError());
+        rwops = nullptr;
+    }
+
+    long long onTell() final
+    {
+        return SDL_RWtell(rwops);
+    }
+
+    void onRewind() final
+    {
+        if (SDL_RWseek(rwops, 0, RW_SEEK_SET) < 0)
+        {
+            close();
+            openr();
+        }
+    }
+
+    std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
+    {
+        std::size_t num1 = SDL_RWread(rwops, buf, siz, num);
+        if (num1 == 0)
+        {
+            const char * err = SDL_GetError();
+            if (err[0]!='\0')
+                throw std::runtime_error(std::string("Error reading \"") + _name + "\": " + err);
+        }
+        return num1;
+    }
+    std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) final
+    {
+        std::size_t num1 = SDL_RWwrite(rwops, buf, siz, num);
+        if (num1 == 0)
+        {
+            const char * err = SDL_GetError();
+            if (err[0]!='\0')
+                throw std::runtime_error(std::string("Error writing \"") + _name + "\": " + err);
+        }
+        return num1;
+    }
+};
+
+
+struct DiskSDL
+{
+    static constexpr char path_separator =
+#ifdef _WIN32
+        '\\';
+#else
+        '/';
+#endif // _WIN32
+
+    Game * game;
+
+    std::string pref_path;
+    std::string base_path;
+
+    template<class TPlatform>
+    DiskSDL(TPlatform *, Game * g):game{g}
+    {
+        const char * bp = SDL_GetBasePath();
+        if (bp == nullptr)
+            throw std::runtime_error("Failed to get base path");
+        base_path = bp;
+
+        std::string path1, path2;
+        for(char c : game->meta.author)
+            if (isalnum(c)) path1.push_back(c);
+        for(char c : game->meta.title)
+            if (isalnum(c)) path2.push_back(c);
+
+        const char * pp = SDL_GetPrefPath(path1.c_str(), path2.c_str());
+        if (pp == nullptr)
+            pref_path = bp;
+        else
+            pref_path = pp;
+
+        fprintf(stderr, "Base path: %s\nPref path: %s\n",base_path.c_str(),pref_path.c_str());
+
+        game->config.setStream(new StreamSDLFile(pref_path+path2+".cfg",false));
+
+        try
+        {
+            game->config.load();
+        }
+        catch (std::runtime_error & e)
+        {
+            std::string msg = e.what();
+            fprintf(stderr, "WARNING: failed to load configuration file: %s\n", msg.c_str());
+            game->config.setDirty();
+        }
+    }
+
+    ~DiskSDL()
+    {
+        if (game->config.isDirty())
+        {
+            try
+            {
+                game->config.save();
+            }
+            catch (std::runtime_error & e)
+            {
+                std::string msg = e.what();
+                fprintf(stderr, "WARNING: failed to save configuration file: %s\n", msg.c_str());
+            }
+        }
+    }
 };
 
 struct AudioSDL
@@ -139,11 +289,11 @@ struct VideoSDL
 
             }
 
-            cfg_x_resolution = game->config.get("x_resolution", 800);
-            cfg_y_resolution = game->config.get("y_resolution", 600);
+            cfg_x_resolution = game->config.get("resolution_x");
+            cfg_y_resolution = game->config.get("resolution_y");
 
             window = SDL_CreateWindow(
-                "rs4",
+                game->meta.title.c_str(),
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
                 cfg_x_resolution, cfg_y_resolution, SDL_WINDOW_RESIZABLE);
@@ -263,14 +413,16 @@ private:
 struct PlatformSDL
 {
     typedef ClockSDL Clock;
+    typedef DiskSDL Disk;
     typedef AudioSDL Audio;
     typedef VideoSDL Video;
     typedef InputSDL Input;
     Input * input;
+    Disk * disk;
     Audio * audio;
     Video * video;
     PlatformSDL(const PlatformSDL &) = delete;
-    PlatformSDL(Clock*,Audio * a, Video * v, Input * i):input{i},audio{a},video{v}
+    PlatformSDL(Clock*,Disk* d,Audio * a, Video * v, Input * i):input{i},disk{d},audio{a},video{v}
     {
         if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_AUDIO|SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
     }

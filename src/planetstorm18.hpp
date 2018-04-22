@@ -15,10 +15,11 @@
 template<class TPlatform>
 class PlanetStorm18
 {
-    World world;
 
     typename TPlatform::Video * video;
     rs4::Game * game;
+
+    World world;
 
     ScreenMenu<TPlatform, PlanetStorm18> screen_menu;
     ScreenPlanet<TPlatform, PlanetStorm18> screen_planet;
@@ -44,7 +45,9 @@ public:
         video{p->video},
         game{g},
         screen_menu(p,this),
-        screen_planet(p,this,&world) {}
+        screen_planet(p,this) {}
+    rs4::Game * getGame() { return game; }
+    World * getWorld() { return &world; }
 
     void update(int dt)
     {

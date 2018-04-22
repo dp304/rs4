@@ -4,7 +4,7 @@
 #include "event.hpp"
 
 template<class TCaster>
-PhysicsPlanet<TCaster>::PhysicsPlanet(TCaster * c, World * w)
+PhysicsPlanet<TCaster>::PhysicsPlanet(TCaster * c, rs4::Game * g, World * w)
         :caster(c),world(w)
 {
 

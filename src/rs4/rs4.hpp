@@ -1,65 +1,361 @@
 #ifndef RS4_HPP_INCLUDED
 #define RS4_HPP_INCLUDED
 
+#include <memory>
 #include <tuple>
 #include <map>
+#include <list>
 #include <string>
+#include <sstream>
 #include <functional>
 #include <cassert>
 #include <stdexcept>
 #include <cstdio>
+#include <cstring>
 
 
 namespace rs4
 {
 
-// CONFIG
-class Config
+// STREAM INTERFACE
+
+class IStream
 {
-    struct Entry
+    bool _readable = false;
+    bool _writable = false;
+    long long _size = -1;
+
+    virtual void onOpenr() = 0;
+    virtual void onOpenw() = 0;
+    virtual void onClose() = 0;
+    virtual long long onTell() { return -1; }
+    virtual void onRewind() { close(); openr(); }
+    virtual std::size_t onRead(void * buf, std::size_t siz, std::size_t num) = 0;
+    virtual std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) = 0;
+protected:
+    void setSize(long long siz) { _size = siz; }
+public:
+    void openr()
     {
-        enum {INVALID, NONE, INTEGER, FLOAT, STRING} type;
-        union
+        assert(!_readable && !_writable);
+        onOpenr();
+        _readable = true;
+    }
+    void openw()
+    {
+        assert(!_readable && !_writable);
+        onOpenw();
+        _writable = true;
+    }
+    void close()
+    {
+        assert(_readable || _writable);
+        onClose();
+        _size = -1;
+        _readable = false;
+        _writable = false;
+    }
+    long long size() { assert(_readable); return _size; }
+    long long tell() { assert(_readable); return onTell(); }
+    void rewind() { assert(_readable); onRewind(); }
+    std::size_t read(void * buf, std::size_t siz, std::size_t num)
+    {
+        assert(_readable);
+        return onRead(buf, siz, num);
+    }
+    std::size_t write(const void * buf, std::size_t siz, std::size_t num)
+    {
+        assert(_writable);
+        return onWrite(buf, siz, num);
+    }
+
+
+    bool getline(std::string * l, std::size_t maxcn = 256)
+    {
+        l->clear();
+        std::size_t i, cn = 0;
+        char c;
+        while ( (i = read(&c, sizeof(char), 1)) == 1 && c != '\n' )
         {
-            int i;
-            float f;
-        } value;
-        std::string value_s;
+            cn++;
+            if (cn > maxcn)
+                throw std::runtime_error("Line too long");
+            *l += c;
+        }
+        return i==1;
+    }
+    void putline(const std::string & l)
+    {
+        static const char eol = '\n';
+        write(l.c_str(), sizeof(char), l.length());
+        write(&eol, sizeof(char), 1);
+    }
+    virtual ~IStream() { if (_readable || _writable) close(); }
+};
 
-        Entry(int val):type{INTEGER},value{.i=val} {}
-        Entry(float val):type{FLOAT},value{.f=val} {}
-        Entry(const std::string & val):type{STRING},value_s{val} {}
-        Entry()=default;
-        operator const int & () const { assert(type==INTEGER); return value.i; }
-        operator const float & () const { assert(type==FLOAT); return value.f; }
-        operator const std::string & () const { assert(type==STRING); return value_s; }
-        void set(int val) { assert(type==INTEGER); value.i=val; }
-        void set(float val) { assert(type==FLOAT); value.f=val; }
-        void set(const std::string & val) { assert(type==STRING); value_s=val; }
-    };
+class StreamNull : public IStream
+{
+    void onOpenr() final { setSize(0); }
+    void onOpenw() final { }
+    void onClose() final { }
+    long long onTell() final { return 0; }
+    void onRewind() final { }
+    std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
+    {
+        return 0;
+    }
+    std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) final
+    {
+        return num;
+    }
+};
 
-    std::map<std::string, Entry> store;
-    bool dirty=true;
+class StreamMem : public IStream
+{
+public:
+    StreamMem(const void * ptr, std::size_t siz):_ptr{ptr},_i{0},_bufSiz{siz} {}
+private:
+    const void * const _ptr;
+    std::size_t _i, _bufSiz;
+
+
+    void onOpenr() final { setSize(_bufSiz); _i = 0; }
+    void onOpenw() final { assert(false&&"StreamMem can only read memory"); }
+    void onClose() final { }
+    long long onTell() final { return _i; }
+    void onRewind() final { _i = 0; }
+    std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
+    {
+        if (_i + num * siz >= _bufSiz)
+            num = (_bufSiz - _i)/siz;
+
+        std::size_t nbyte = num * siz;
+
+        std::copy( (char*) _ptr + _i, (char*) _ptr + _i + nbyte, (char*) buf);
+        _i += nbyte;
+
+        return num;
+    }
+    std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) final
+    {
+        return 0;
+    }
+};
+
+
+// CONFIG
+
+class ConfigValue
+{
+    friend class Config;
+
+    enum type_t {INVALID, NONE, INTEGER, FLOAT, STRING} type = NONE;
+    union
+    {
+        int i;
+        float f;
+    } value;
+    std::string value_s;
+
+    std::list<std::function<void(const ConfigValue &)> > callbacks;
+
+    ConfigValue(int val):type{INTEGER},value{.i=val} {}
+    ConfigValue(float val):type{FLOAT},value{.f=val} {}
+    ConfigValue(const std::string & val):type{STRING},value_s{val} {}
+
+    void notifyAll()
+    {
+        for (auto it = callbacks.begin(); it!=callbacks.end(); it++)
+            (*it)(*this);
+    }
+
+    void checkType(type_t t) const
+    {
+        if (type != t) throw std::runtime_error("Type mismatch");
+    }
+
+    void checkType(type_t t)
+    {
+        if (type == NONE) type = t;
+        if (type != t) throw std::runtime_error("Type mismatch");
+    }
+
+    void set(int val) { checkType(INTEGER); value.i=val; notifyAll(); }
+    void set(float val) { checkType(FLOAT); value.f=val; notifyAll(); }
+    void set(const std::string & val) { checkType(STRING); value_s=val; notifyAll(); }
 
 public:
-    bool isDirty() const { return dirty; }
+    ConfigValue()=default;
 
-    template<class TValue>
-    const TValue & get(const std::string & key, const TValue & defValue)
+    int getI() const { checkType(INTEGER); return value.i; }
+    float getF() const { checkType(FLOAT); return value.f; }
+    const std::string & getS() const { checkType(STRING); return value_s; }
+
+    operator int () const { return getI(); }
+    operator float () const { return getF(); }
+    operator const std::string & () const { return getS(); }
+};
+
+
+class Config
+{
+    typedef std::map<std::string, ConfigValue> store_t;
+
+    store_t store;
+    bool dirty=false;
+
+    std::unique_ptr<IStream> stream;
+
+    void parseline(std::string * l)
     {
-        if (store.find(key) == store.end() )
+        if (l->empty()) return;
+        std::size_t eqi = l->find('=');
+        if (eqi == std::string::npos)
+            throw std::runtime_error("Missing '='");
+        if (eqi == 0)
+            throw std::runtime_error("Missing key");
+        std::size_t kendi = l->find_last_not_of(' ', eqi - 1);
+        if (kendi == std::string::npos)
+            throw std::runtime_error("Missing key");
+        std::size_t kstarti = l->find_first_not_of(' ');
+        std::size_t vstarti = l->find_first_not_of(' ', eqi + 1);
+        if (vstarti == std::string::npos)
+            throw std::runtime_error("Missing value");
+        std::size_t vendi = l->find_last_not_of(' ');
+
+        std::string key = l->substr(kstarti, kendi-kstarti+1);
+        std::string value = l->substr(vstarti, vendi-vstarti+1);
+
+        if (value.front()=='"' && value.back()=='"')
         {
-            store[key] = Entry{defValue};
+            // STRING VALUE
+            value = value.substr(1, value.size() - 2);
+            store[key].set(value);
         }
-        return store[key];
+        else if (    (value.front()=='-' && value.find_first_not_of("0123456789",1) == std::string::npos)
+                  || (value.find_first_not_of("0123456789",0) == std::string::npos) )
+        {
+            // INTEGER VALUE
+            int vi = std::stoi(value);
+            store[key].set(vi);
+        }
+        else if (    (value.front()=='-' && value.find_first_not_of("0123456789.",1) == std::string::npos)
+                  || (value.find_first_not_of("0123456789.",0) == std::string::npos) )
+        {
+            // FLOAT VALUE
+            int vf = std::stof(value);
+            store[key].set(vf);
+        }
+        else
+            throw std::runtime_error("Missing '\"'");
+
+    }
+
+    const ConfigValue & safe_find(const std::string & key) const
+    {
+        auto it = store.find(key);
+        if ( it == store.end() )
+        {
+            throw std::runtime_error("Unknown key \"" + key + "\"");
+        }
+        return it->second;
+    }
+
+    ConfigValue & safe_find(const std::string & key)
+    {
+        return const_cast<ConfigValue &>(const_cast<const Config *>(this)->safe_find(key));
+    }
+
+
+public:
+    Config():stream{new StreamNull} {}
+    Config(const char * cfg_s):stream{new StreamMem(cfg_s, strlen(cfg_s))} {load();}
+    void setStream(IStream * s) { stream.reset(s); }
+
+    bool isDirty() const { return dirty; }
+    void setDirty() { dirty = true; }
+
+    const ConfigValue & get(const std::string & key) const
+    {
+        return safe_find(key);
     }
 
     template<class TValue>
     void set(const std::string & key, const TValue & value)
     {
-        assert(store.find(key)!=store.end());
-        store[key].set(value);
+        safe_find(key).set(value);
         dirty=true;
+    }
+
+    const ConfigValue & subscribe(const std::string & key,
+                                  std::function<void(const ConfigValue &)> cb,
+                                  bool notifyNow = true)
+    {
+        ConfigValue & val = safe_find(key);
+        val.callbacks.push_back(cb);
+        if (notifyNow) cb(val);
+        return val;
+    }
+
+    template<class TValue>
+    const ConfigValue & subscribe(const std::string & key, TValue * v)
+    {
+        return subscribe(key, [v](const ConfigValue & val) { *v = val; });
+    }
+
+    void load()
+    {
+        stream->openr();
+        std::string line;
+        int ln = 1;
+        bool more = true;
+        try
+        {
+            do
+            {
+                more = stream->getline(&line);
+                parseline(&line);
+                ln++;
+            }
+            while (more);
+        }
+        catch (std::runtime_error & err)
+        {
+            stream->close();
+            std::stringstream ss;
+            ss<<"Error parsing configuration at line " << ln << ": " << err.what();
+            throw std::runtime_error(ss.str());
+        }
+        stream->close();
+        dirty = false;
+    }
+    void save()
+    {
+        std::string line;
+        stream->openw();
+        for (const auto & ent : store)
+        {
+            line = ent.first + " = ";
+            switch (ent.second.type)
+            {
+            case ConfigValue::INTEGER:
+                line += std::to_string(ent.second.getI());
+                break;
+            case ConfigValue::FLOAT:
+                line += std::to_string(ent.second.getF());
+                break;
+            case ConfigValue::STRING:
+                line = line + "\"" + ent.second.getS() + "\"";
+                break;
+            default:
+                assert(false && "Invalid type");
+            }
+            stream->putline(line);
+        }
+        stream->close();
+
+        dirty = false;
+
     }
 };
 
@@ -69,12 +365,24 @@ public:
 
 class PlatformTest;
 class ClockTest;
+class DiskTest;
+class AudioTest;
 class VideoTest;
 class InputTest;
 
 template<class TPlatform> class MachineTest;
 
 // GAME, ENGINE ETC.
+
+struct Meta
+{
+    std::string title = "rs4 game";
+    std::string version = "0.0";
+    std::string author = "Electric Elephant";
+    std::string date = __DATE__;
+    std::string time = __TIME__;
+};
+
 
 class Game
 {
@@ -84,10 +392,11 @@ class Game
     bool exiting;
 
 public:
+    const Meta meta;
     Config config;
 
     Game(const Game&) = delete;
-    Game():exiting{false} { }
+    Game(const Meta & m, const char * cfg_s):exiting{false},meta{m},config{cfg_s} { }
 
     void exit()
     {
@@ -106,6 +415,7 @@ class Engine
     Game game;
     TPlatform platform;
     typename TPlatform::Clock clock;
+    typename TPlatform::Disk disk;
     typename TPlatform::Audio audio;
     typename TPlatform::Video video;
     typename TPlatform::Input input;
@@ -116,9 +426,11 @@ class Engine
 public:
 
     Engine(const Engine&) = delete;
-    Engine():
-        platform(&clock,&audio,&video,&input),
+    Engine(const Meta & m, const char * cfg_s = ""):
+        game(m, cfg_s),
+        platform(&clock,&disk,&audio,&video,&input),
         clock(&platform),
+        disk(&platform, &game),
         audio(&platform, &game),
         video(&platform, &game),
         input(&platform),
@@ -185,14 +497,18 @@ public:
 struct PlatformTest
 {
     typedef ClockTest Clock;
+    typedef DiskTest Disk;
+    typedef AudioTest Audio;
     typedef VideoTest Video;
     typedef InputTest Input;
 
     Clock * clock;
+    Disk * disk;
+    Audio * audio;
     Video * video;
     Input * input;
 
-    PlatformTest(Clock*c,Video*v,Input*i):clock{c},video{v},input{i} {}
+    PlatformTest(Clock*c,Disk*d,Audio*a,Video*v,Input*i):clock{c},disk{d},audio{a},video{v},input{i} {}
     void handleEvents(Game * game) {}
 };
 
@@ -220,12 +536,30 @@ public:
 
 };
 
+class DiskTest
+{
+public:
+    DiskTest(PlatformTest * platform, Game * game) {}
+};
+
+class AudioTest
+{
+public:
+    FILE * f;
+    AudioTest(const AudioTest &) = delete;
+    AudioTest(PlatformTest * platform, Game * game)
+    {
+        f = stderr;
+    }
+    ~AudioTest() {}
+};
+
 class VideoTest
 {
 public:
     FILE * f;
     VideoTest(const VideoTest &) = delete;
-    VideoTest(PlatformTest * platform)
+    VideoTest(PlatformTest * platform, Game * game)
     {
         f = stderr;
     }

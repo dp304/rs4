@@ -27,6 +27,7 @@ class ScreenPlanet: public rs4::IScreen
 
     Caster caster;
 
+    rs4::Game * game;
     World * world;
 
     Control control;
@@ -35,7 +36,7 @@ class ScreenPlanet: public rs4::IScreen
     Graphics graphics;
 
 public:
-    ScreenPlanet(TPlatform * platform, TMachine * m, World * w);
+    ScreenPlanet(TPlatform * platform, TMachine * m);
     void update(int dt) final
     {
         control.update();
@@ -56,13 +57,14 @@ private:
 
 
 template<class TPlatform, class TMachine>
-ScreenPlanet<TPlatform, TMachine>::ScreenPlanet(TPlatform * platform, TMachine * m, World * w):
+ScreenPlanet<TPlatform, TMachine>::ScreenPlanet(TPlatform * platform, TMachine * m):
         caster(&sound, m),
-        world(w),
-        control(platform->input, &caster, w),
-        physics(&caster, w),
-        sound(platform->audio, w),
-        graphics(platform->video, w)
+        game(m->getGame()),
+        world(m->getWorld()),
+        control(platform->input, &caster, game, world),
+        physics(&caster, game, world),
+        sound(platform->audio, game, world),
+        graphics(platform->video, game, world)
 {
     world->registry.prepare<Position,Velocity,Colour,Health>();
     world->registry.prepare<Position,Velocity,Colour>();
