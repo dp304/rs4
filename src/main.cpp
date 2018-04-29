@@ -9,6 +9,8 @@
 
 static const char * default_config =
 R"(
+fullscreen = 0
+fullscreen_mode = 0
 resolution_x = 800
 resolution_y = 600
 sound = 1
@@ -25,10 +27,10 @@ int main() {
     try
     {
         rs4::Engine<rs4::PlatformSDLGL, PlanetStorm18> engine(meta, default_config);
-        //rs4::Engine<rs4::PlatformTest, PlanetStorm18> engine(default_config);
+        //rs4::Engine<rs4::PlatformTest, PlanetStorm18> engine(meta, default_config);
         engine.loop();
     }
-    catch (std::runtime_error & error)
+    catch (std::exception & error)
     {
         fprintf(stderr,"FATAL: %s\n", error.what());
     }

@@ -20,6 +20,8 @@ class ScreenMenu : public rs4::IScreen
 
     UIMenu ui;
 
+    //rs4::Game * game;
+
     Control control;
     Graphics graphics;
 
@@ -47,6 +49,7 @@ template<class TPlatform, class TMachine>
 ScreenMenu<TPlatform,TMachine>::ScreenMenu(TPlatform * p, TMachine *m):
     caster(m),
     subscreen(nullptr),
+    ui{p->video,&(m->getGame()->config)},
     control(p->input, &caster, &ui),
     graphics(p->video, &ui)
 {

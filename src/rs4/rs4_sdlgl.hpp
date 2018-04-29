@@ -56,11 +56,17 @@ struct VideoSDLGL
     static constexpr float maxAspect = 16.0f/9.0f;
     SDL_Window * window;
     SDL_GLContext context;
+    struct Mode
+    {
+        std::string name;
+        SDL_DisplayMode displaymode;
+    };
+    std::vector<Mode> modes;
     int width, height;
+    int fullscreen, fullscreen_mode;
+
 
     Game * game;
-
-    int cfg_x_resolution, cfg_y_resolution;
 
 
     float aspect;
@@ -80,8 +86,8 @@ struct VideoSDLGL
         //cfg_x_resolution = game->config.get("resolution_x");
         //cfg_y_resolution = game->config.get("resolution_y");
 
-        game->config.subscribe("resolution_x", &cfg_x_resolution);
-        game->config.subscribe("resolution_y", &cfg_y_resolution);
+        width = game->config.get("resolution_x");
+        height = game->config.get("resolution_y");
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -92,12 +98,62 @@ struct VideoSDLGL
         /*if (SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8) != 0)
             throw std::runtime_error(SDL_GetError());*/
 
+
         window = SDL_CreateWindow(
             game->meta.title.c_str(),
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
-            cfg_x_resolution, cfg_y_resolution, SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);
+            width, height,
+            SDL_WINDOW_RESIZABLE|SDL_WINDOW_OPENGL);
         if (window == nullptr) throw std::runtime_error(SDL_GetError());
+
+        int nmodes = SDL_GetNumDisplayModes(0);
+        for (int i = 0; i < nmodes; i++)
+        {
+            SDL_DisplayMode dm = {0};
+            if (SDL_GetDisplayMode(0, i, &dm) != 0)
+                throw std::runtime_error(std::string("Failed to get display mode: ")+SDL_GetError());
+
+            // if new resolution
+            if (i==0 || dm.w != modes.back().displaymode.w || dm.h != modes.back().displaymode.h )
+            {
+                dm.refresh_rate = 0;
+                dm.driverdata = nullptr;
+                modes.push_back(Mode{.name = std::to_string(dm.w)+
+                                             "x"+
+                                             std::to_string(dm.h),
+                                    .displaymode = dm
+                                    }
+                                );
+            }
+        }
+        fullscreen = game->config.get("fullscreen");
+
+        fullscreen_mode = game->config.get("fullscreen_mode");
+        if ( fullscreen_mode<0 || fullscreen_mode>=(int)(1+modes.size()) )
+        {
+            fprintf(stderr, "WARNING: Invalid fullscreen mode, setting to 0\n");
+            fullscreen_mode=0;
+            game->config.set("fullscreen_mode",0);
+        }
+
+        game->config.subscribe("fullscreen", [this](const ConfigValue &v)
+                                            {
+                                                fullscreen = v;
+                                                updateFullscreen();
+                                            }, false
+        );
+
+        game->config.subscribe("fullscreen_mode", [this](const ConfigValue &v)
+                                            {
+                                                if (v.getI() == fullscreen_mode) return;
+                                                fullscreen_mode = v;
+                                                if (fullscreen)
+                                                    updateFullscreen();
+                                            }, false
+        );
+
+        updateFullscreen();
 
         context = SDL_GL_CreateContext(window);
         if (context == nullptr) throw std::runtime_error(SDL_GetError());
@@ -108,9 +164,7 @@ struct VideoSDLGL
         GLenum glewStatus = glewInit();
         if (glewStatus != GLEW_OK) throw std::runtime_error((char*)glewGetErrorString(glewStatus));
 
-        SDL_GetWindowSize(window, &width, &height);
-        updateAspect();
-
+        updateResolution();
     }
 
     void updateAspect()
@@ -134,6 +188,37 @@ struct VideoSDLGL
         {
             glViewport(0,0,width,height);
         }
+    }
+
+    void updateResolution()
+    {
+        SDL_GetWindowSize(window, &width, &height);
+        updateAspect();
+    }
+
+    void updateFullscreen()
+    {
+        if (fullscreen==0)
+        {
+            SDL_SetWindowFullscreen(window, 0);
+        }
+        else if (fullscreen==1)
+        {
+            if (fullscreen_mode==0)
+            {
+                SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            }
+            else if (fullscreen_mode < (int)(1+modes.size()) )
+            {
+                SDL_SetWindowDisplayMode(window, &modes[fullscreen_mode-1].displaymode);
+                SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+            }
+            else
+                throw std::runtime_error("Invalid fullscreen mode");
+        }
+        else
+            throw std::runtime_error("Invalid fullscreen value");
+        updateResolution();
     }
 
     static GLuint makeShaderProgram(const GLchar ** vs_src,
@@ -212,9 +297,12 @@ inline void PlatformSDLGL::handleEvents(Game * game)
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
-                video->width = event.window.data1;
+                /*video->width = event.window.data1;
                 video->height = event.window.data2;
-                video->updateAspect();
+                video->updateAspect();*/
+                video->updateResolution();
+                game->config.set("resolution_x",video->width);
+                game->config.set("resolution_y",video->height);
             }
             break;
         }
@@ -224,6 +312,13 @@ inline void PlatformSDLGL::handleEvents(Game * game)
         video->wireframe = !video->wireframe;
         glPolygonMode(GL_FRONT_AND_BACK, (video->wireframe?GL_LINE:GL_FILL));
     }
+    //TODO remove
+    if (input->keyPressed[SDL_SCANCODE_F2])
+    {
+        int s = game->config.get("sound");
+        game->config.set("sound",!s);
+    }
+
 
 }
 
