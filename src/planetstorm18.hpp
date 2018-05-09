@@ -45,7 +45,33 @@ public:
         video{p->video},
         game{g},
         screen_menu(p,this),
-        screen_planet(p,this) {}
+        screen_planet(p,this)
+        {
+            // FOR TESTING
+            rs4::Data<rs4::LDText> txt1(g), txt2(g), txt3(g);
+            fprintf(stderr, "load txt1:\n");
+            txt1.load("data/x.txt");
+            fprintf(stderr, "load txt2:\n");
+            txt2.load("data/x.txt");
+            fprintf(stderr, "load txt3:\n");
+            txt3.load("data/x.txt");
+            fprintf(stderr, "unload txt2:\n");
+            txt2.unload();
+            fprintf(stderr, "load txt2:\n");
+            txt2.load("data/x.txt");
+            fprintf(stderr, "unload txt1:\n");
+            txt1.unload();
+            fprintf(stderr, "unload txt2:\n");
+            txt2.unload();
+            fprintf(stderr, "unload txt3:\n");
+            txt3.unload();
+            fprintf(stderr, "load txt2:\n");
+            txt2.load("data/x.txt");
+
+
+
+            //fprintf(stderr, "**%s**\n",txt->txt.c_str());
+        }
     rs4::Game * getGame() { return game; }
     World * getWorld() { return &world; }
 

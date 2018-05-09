@@ -34,6 +34,7 @@
 			<Add directory="/usr/include/SDL2" />
 			<Add directory="/home/peti/src/entt/src" />
 			<Add directory="/home/peti/src/nuklear" />
+			<Add directory="/home/peti/src/stb" />
 			<Add directory="src" />
 		</Compiler>
 		<Linker>

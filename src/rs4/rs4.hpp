@@ -4,7 +4,9 @@
 #include <memory>
 #include <tuple>
 #include <map>
+#include <unordered_map>
 #include <list>
+#include <regex>
 #include <string>
 #include <sstream>
 #include <functional>
@@ -17,6 +19,8 @@
 namespace rs4
 {
 
+class Game;
+
 // STREAM INTERFACE
 
 class IStream
@@ -24,11 +28,20 @@ class IStream
     bool _readable = false;
     bool _writable = false;
     long long _size = -1;
+    bool _eof = false;
 
     virtual void onOpenr() = 0;
     virtual void onOpenw() = 0;
     virtual void onClose() = 0;
     virtual long long onTell() { return -1; }
+    virtual long long onSkip(long long num)
+    {
+        char c;
+        long long i=0;
+        while (i < num && read(&c, sizeof(char), 1) == 1)
+            i++;
+        return i;
+    }
     virtual void onRewind() { close(); openr(); }
     virtual std::size_t onRead(void * buf, std::size_t siz, std::size_t num) = 0;
     virtual std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) = 0;
@@ -54,14 +67,19 @@ public:
         _size = -1;
         _readable = false;
         _writable = false;
+        _eof = false;
     }
+    bool eof() { assert(_readable); return _eof; }
     long long size() { assert(_readable); return _size; }
     long long tell() { assert(_readable); return onTell(); }
+    long long skip(long long num) { assert(_readable); return onSkip(num); }
     void rewind() { assert(_readable); onRewind(); }
     std::size_t read(void * buf, std::size_t siz, std::size_t num)
     {
         assert(_readable);
-        return onRead(buf, siz, num);
+        const std::size_t n = onRead(buf, siz, num);
+        if (n==0) _eof = true;
+        return n;
     }
     std::size_t write(const void * buf, std::size_t siz, std::size_t num)
     {
@@ -99,6 +117,7 @@ class StreamNull : public IStream
     void onOpenw() final { }
     void onClose() final { }
     long long onTell() final { return 0; }
+    long long onSkip(long long) { return 0; }
     void onRewind() final { }
     std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
     {
@@ -123,10 +142,17 @@ private:
     void onOpenw() final { assert(false&&"StreamMem can only read memory"); }
     void onClose() final { }
     long long onTell() final { return _i; }
+    long long onSkip(long long num)
+    {
+        if (_i + num >= _bufSiz)   // TODO '>' ?
+            num = _bufSiz - _i;
+        _i += num;
+        return num;
+    }
     void onRewind() final { _i = 0; }
     std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
     {
-        if (_i + num * siz >= _bufSiz)
+        if (_i + num * siz >= _bufSiz)   // TODO '>' ?
             num = (_bufSiz - _i)/siz;
 
         std::size_t nbyte = num * siz;
@@ -140,6 +166,133 @@ private:
     {
         return 0;
     }
+};
+
+// DATA, DATA STORE
+
+struct ILoadedData
+{
+    virtual ~ILoadedData() {}
+};
+
+class DataStore
+{
+public:
+    typedef std::function<std::unique_ptr<IStream>(const char *) > stream_factory_t;
+private:
+    std::unordered_map<std::string, std::weak_ptr<ILoadedData> > _datamap;
+    std::list<std::pair<std::regex, stream_factory_t> > _sources;
+public:
+    std::unique_ptr<IStream> makeStream(const char * path)
+    {
+        auto it = std::find_if(_sources.begin(),
+                              _sources.end(),
+                              [path](const std::pair<std::regex, stream_factory_t> &s) -> bool
+                              {
+                                    return std::regex_match(path, s.first);
+                              }
+                              );
+        if (it == _sources.end())
+            throw std::runtime_error(std::string("Unknown source for data \"")+path+"\"");
+
+        return (it->second)(path);
+    }
+
+    template <class TLoadedData>
+    std::shared_ptr<ILoadedData> load(const char * path)
+    {
+        // TODO purge buckets
+        std::weak_ptr<ILoadedData> & wp = _datamap[path];
+        std::shared_ptr<ILoadedData> sp = wp.lock();
+        if (!sp)
+        {
+            auto stream = makeStream(path);
+            sp = TLoadedData::load(stream.get(), path);
+            wp = sp;
+        }
+        else if (dynamic_cast<TLoadedData*>(sp.get()) == nullptr)
+        {
+            throw std::runtime_error(
+                std::string("Invalid format ")+typeid(TLoadedData).name()+
+                " for data \""+path+"\" already loaded as "+
+                typeid(*sp).name()
+                );
+        }
+
+        return sp;
+    }
+
+    void addSource(const char * re, stream_factory_t sf)
+    {
+        _sources.emplace_front(re,sf);
+    }
+
+    void addSourceFallback(const char * re, stream_factory_t sf)
+    {
+        _sources.emplace_back(re,sf);
+    }
+
+
+};
+
+template <class TLoadedData>
+class Data
+{
+    DataStore * _store;
+    std::shared_ptr<ILoadedData> _ptr;
+public:
+    Data(DataStore * ds):_store{ds} {}
+    Data(Game * g);
+    TLoadedData * operator->()
+    {
+        return static_cast<TLoadedData*>(_ptr.get());  // Downcast!
+    }
+    bool isLoaded() { return _ptr; }
+    void load(const char * path)
+    {
+        if (_ptr) return;
+        _ptr = _store->load<TLoadedData>(path);
+    }
+    void unload()
+    {
+        _ptr.reset();
+    }
+
+};
+
+// LOADED DATA
+
+struct LDText: public ILoadedData
+{
+    std::string txt;
+    static std::shared_ptr<LDText> load(IStream * stream, const char * path)
+    {
+        fprintf(stderr, "Loading text \"%s\"...\n", path);
+        stream->openr();
+        long long siz = stream->size();
+        if (siz<0)
+            throw std::runtime_error(std::string("Text loading implemented only for streams with size"));
+        else if (siz>0xFFFFFFFF)
+            throw std::runtime_error(std::string("Text too long"));
+
+        auto ldp = std::make_shared<LDText>();
+
+        ldp->txt.resize((std::size_t)siz);
+
+        stream->read((void*)(ldp->txt.data()), 1, siz);
+
+        stream->close();
+
+        return ldp;
+    }
+};
+
+struct LDImage: public ILoadedData
+{
+    int width, height;
+    int pixel_size;
+    std::vector<char> pix;
+    static std::shared_ptr<LDImage> load(IStream * stream, const char * path);
 };
 
 
@@ -394,6 +547,7 @@ class Game
 public:
     const Meta meta;
     Config config;
+    DataStore ds;
 
     Game(const Game&) = delete;
     Game(const Meta & m, const char * cfg_s):exiting{false},meta{m},config{cfg_s} { }
@@ -406,6 +560,10 @@ public:
     ~Game() { }
 };
 
+// convenience constructor for Data
+template <class TLoadedData>
+Data<TLoadedData>::Data(Game * g):_store{&g->ds} {}
+//
 
 template<class TPlatform=PlatformTest,
          template<class> class TMachine=MachineTest,

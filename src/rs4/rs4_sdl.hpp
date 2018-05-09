@@ -104,6 +104,21 @@ private:
         return SDL_RWtell(rwops);
     }
 
+    long long onSkip(long long num)
+    {
+        long long p0, p1;
+        p0 = SDL_RWtell(rwops);
+        if (p0 == -1)
+            throw std::runtime_error(std::string("Error determining position in \"") + _name + "\": "
+                                     + SDL_GetError());
+        p1 = SDL_RWseek(rwops, num, RW_SEEK_CUR);
+
+        if (p1 == -1)
+            throw std::runtime_error(std::string("Error seeking in \"") + _name + "\": " + SDL_GetError());
+
+        return p1-p0;
+    }
+
     void onRewind() final
     {
         if (SDL_RWseek(rwops, 0, RW_SEEK_SET) < 0)
@@ -186,6 +201,12 @@ struct DiskSDL
             fprintf(stderr, "WARNING: failed to load configuration file: %s\n", msg.c_str());
             game->config.setDirty();
         }
+        game->ds.addSource("data/.*",
+            [this](const char * path) -> std::unique_ptr<IStream>
+            {
+                return std::make_unique<StreamSDLFile>(base_path+path, true);
+            }
+        );
     }
 
     ~DiskSDL()

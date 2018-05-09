@@ -9,7 +9,7 @@
 
 
 GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Game * g, World * w):
-        video{video}, world{w}
+        video{video}, world{w}, ellenseg{g}
 {
     using rs4::vertex_shader_source;
     using rs4::fragment_shader_source;
@@ -78,6 +78,8 @@ GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Ga
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // ellenseg
+    ellenseg.load("data/ellenseg1.png");
+
     glBindTexture(GL_TEXTURE_2D, textures[2]);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -86,7 +88,8 @@ GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Ga
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_w, texture_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data[2]);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_w, texture_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data[2]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ellenseg->width, ellenseg->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &ellenseg->pix[0]);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // felszin
