@@ -9,7 +9,7 @@
 
 
 GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Game * g, World * w):
-        video{video}, world{w}, ellenseg{g}
+        video{video}, world{w}, hajo{g}, ellenseg{g}
 {
     using rs4::vertex_shader_source;
     using rs4::fragment_shader_source;
@@ -66,6 +66,9 @@ GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Ga
 
 
     // hajo
+    hajo.load("data/hajo2.png");
+    assert(hajo->pixel_size == 4);
+
     glBindTexture(GL_TEXTURE_2D, textures[1]);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -74,11 +77,13 @@ GraphicsPlanet<rs4::VideoSDLGL>::GraphicsPlanet(rs4::VideoSDLGL * video, rs4::Ga
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_w, texture_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data[0]);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_w, texture_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_data[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, hajo->width, hajo->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &hajo->pix[0]);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // ellenseg
     ellenseg.load("data/ellenseg1.png");
+    assert(ellenseg->pixel_size == 4);
 
     glBindTexture(GL_TEXTURE_2D, textures[2]);
 

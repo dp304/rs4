@@ -17,6 +17,7 @@ class GraphicsPlanet<rs4::VideoSDLGL>
     rs4::VideoSDLGL * video;
     World * world;
 
+    rs4::Data<rs4::LDImage> hajo;
     rs4::Data<rs4::LDImage> ellenseg;
 
     GLuint vbo[1];

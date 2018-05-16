@@ -105,7 +105,7 @@ void PhysicsPlanet<TCaster>::update(int dt) {
 
         if (coll)
         {
-            caster->signal(EventCollision{});
+            caster->signal(EventCollision{p.buf[i1].x, p.buf[i1].y});
             Colour & c = view.get<Colour>(entity);
             Health & h = view.get<Health>(entity);
             h.hp -= 1;

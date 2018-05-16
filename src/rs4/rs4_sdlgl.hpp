@@ -73,7 +73,8 @@ struct VideoSDLGL
     bool wireframe = false;
 
     VideoSDLGL(const VideoSDLGL &) = delete;
-    VideoSDLGL(PlatformSDLGL *, Game * g):
+    template<class TPlatform>
+    VideoSDLGL(TPlatform *, Game * g):
         window{nullptr},
         game{g},
         aspect{1.0f}
@@ -82,9 +83,6 @@ struct VideoSDLGL
         {
             if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) throw std::runtime_error(SDL_GetError());
         }
-
-        //cfg_x_resolution = game->config.get("resolution_x");
-        //cfg_y_resolution = game->config.get("resolution_y");
 
         width = game->config.get("resolution_x");
         height = game->config.get("resolution_y");
@@ -301,8 +299,11 @@ inline void PlatformSDLGL::handleEvents(Game * game)
                 video->height = event.window.data2;
                 video->updateAspect();*/
                 video->updateResolution();
-                game->config.set("resolution_x",video->width);
-                game->config.set("resolution_y",video->height);
+                if (!video->fullscreen)
+                {
+                    game->config.set("resolution_x",video->width);
+                    game->config.set("resolution_y",video->height);
+                }
             }
             break;
         }

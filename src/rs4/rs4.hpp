@@ -69,8 +69,11 @@ public:
         _writable = false;
         _eof = false;
     }
-    bool eof() { assert(_readable); return _eof; }
-    long long size() { assert(_readable); return _size; }
+    bool isReadable() const { return _readable; }
+    bool isWritable() const { return _writable; }
+    bool isOpen() const { return _readable || _writable; }
+    bool eof() const { assert(_readable); return _eof; }
+    long long size() const { assert(_readable); return _size; }
     long long tell() { assert(_readable); return onTell(); }
     long long skip(long long num) { assert(_readable); return onSkip(num); }
     void rewind() { assert(_readable); onRewind(); }
@@ -108,7 +111,7 @@ public:
         write(l.c_str(), sizeof(char), l.length());
         write(&eol, sizeof(char), 1);
     }
-    virtual ~IStream() { if (_readable || _writable) close(); }
+    virtual ~IStream() { }
 };
 
 class StreamNull : public IStream
@@ -207,7 +210,9 @@ public:
         if (!sp)
         {
             auto stream = makeStream(path);
+            stream->openr();
             sp = TLoadedData::load(stream.get(), path);
+            stream->close();
             wp = sp;
         }
         else if (dynamic_cast<TLoadedData*>(sp.get()) == nullptr)
@@ -268,7 +273,6 @@ struct LDText: public ILoadedData
     static std::shared_ptr<LDText> load(IStream * stream, const char * path)
     {
         fprintf(stderr, "Loading text \"%s\"...\n", path);
-        stream->openr();
         long long siz = stream->size();
         if (siz<0)
             throw std::runtime_error(std::string("Text loading implemented only for streams with size"));
@@ -281,8 +285,6 @@ struct LDText: public ILoadedData
 
         stream->read((void*)(ldp->txt.data()), 1, siz);
 
-        stream->close();
-
         return ldp;
     }
 };
@@ -293,6 +295,15 @@ struct LDImage: public ILoadedData
     int pixel_size;
     std::vector<char> pix;
     static std::shared_ptr<LDImage> load(IStream * stream, const char * path);
+};
+
+struct LDSound: public ILoadedData
+{
+    int channels;
+    int rate;
+    int sample_size;
+    std::vector<char> samples;
+    static std::shared_ptr<LDSound> load(IStream * stream, const char * path);
 };
 
 

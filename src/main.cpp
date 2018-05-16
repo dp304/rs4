@@ -3,7 +3,7 @@
 #include <cmath>
 
 #include "rs4/rs4.hpp"
-#include "rs4/rs4_sdlgl.hpp"
+#include "rs4/rs4_sdlglal.hpp"
 
 #include "planetstorm18.hpp"
 
@@ -26,7 +26,7 @@ int main() {
 
     try
     {
-        rs4::Engine<rs4::PlatformSDLGL, PlanetStorm18> engine(meta, default_config);
+        rs4::Engine<rs4::PlatformSDLGLAL, PlanetStorm18> engine(meta, default_config);
         //rs4::Engine<rs4::PlatformTest, PlanetStorm18> engine(meta, default_config);
         engine.loop();
     }

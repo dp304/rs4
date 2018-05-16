@@ -61,9 +61,17 @@ public:
 
 class StreamSDLFile : public IStream
 {
+    static_assert(RW_SEEK_SET==SEEK_SET &&
+                  RW_SEEK_CUR==SEEK_CUR &&
+                  RW_SEEK_END==SEEK_END,
+                  "SDL has SEEK_* constants incompatible with stdio!");
 public:
     // TODO &&
     StreamSDLFile(const std::string & n, bool b = true):_name{n},_bin{b} {}
+    ~StreamSDLFile()
+    {
+        if (isOpen()) close();
+    }
 private:
     std::string _name;
     bool _bin;

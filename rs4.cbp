@@ -41,6 +41,7 @@
 			<Add library="SDL2" />
 			<Add library="GL" />
 			<Add library="GLEW" />
+			<Add library="openal" />
 		</Linker>
 		<Unit filename="src/component.hpp" />
 		<Unit filename="src/event.hpp" />
@@ -63,6 +64,7 @@
 		<Unit filename="src/rs4/rs4_pcm.cpp" />
 		<Unit filename="src/rs4/rs4_sdl.hpp" />
 		<Unit filename="src/rs4/rs4_sdlgl.hpp" />
+		<Unit filename="src/rs4/rs4_sdlglal.hpp" />
 		<Unit filename="src/rs4/rs4_shaders.cpp" />
 		<Unit filename="src/rs4/rs4_textures.cpp" />
 		<Unit filename="src/screen_menu.hpp" />

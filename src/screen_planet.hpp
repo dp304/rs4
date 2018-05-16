@@ -41,6 +41,7 @@ public:
     {
         control.update();
         physics.update(dt);
+        sound.update(dt);
     }
     void render(float alpha) final
     {
