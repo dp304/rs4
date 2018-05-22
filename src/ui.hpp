@@ -22,7 +22,7 @@ struct UIMenu
 
     nk_colorf bg;
     int sound;
-    nk_size volume;
+    int music_volume;
     int fullscreen;
     int fullscreen_mode;
     std::vector<const char *> mode_labels = {"desktop"};
@@ -34,7 +34,7 @@ struct UIMenu
         config->subscribe("sound", &sound);
         config->subscribe("fullscreen", &fullscreen);
         config->subscribe("fullscreen_mode", &fullscreen_mode);
-        volume = 50;
+        config->subscribe("music_volume", &music_volume);
 
         for (const auto & it : video->modes)
         {
@@ -86,7 +86,11 @@ struct UIMenu
             {
                 config->set("sound", sound);
             }
-            nk_progress(context, &volume, 100, NK_MODIFIABLE);
+            nk_size music_volume_nks = music_volume;
+            if (nk_progress(context, &music_volume_nks, 100, NK_MODIFIABLE))
+            {
+                config->set("music_volume", (int)music_volume_nks);
+            }
 
             if (nk_checkbox_label(context, "Full screen", &fullscreen))
             {

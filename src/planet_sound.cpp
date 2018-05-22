@@ -43,7 +43,6 @@ SoundPlanet<rs4::AudioAL>::SoundPlanet(rs4::AudioAL * a, rs4::Game * g, World * 
                     });
 
 
-    alGetError();
     alGenBuffers(1, albs);
     audio->handleError("failed to generate buffers");
 
@@ -60,6 +59,13 @@ SoundPlanet<rs4::AudioAL>::SoundPlanet(rs4::AudioAL * a, rs4::Game * g, World * 
 
     alSourcei(alss[0], AL_BUFFER, albs[0]);
     audio->handleError("failed to assign buffer to source");
+
+    std::unique_ptr<rs4::StreamMusic> mymusic =
+        rs4::makeStreamMusicVorbis(
+            std::make_unique<rs4::StreamSDLFile>("data/melee_mod.ogg")
+            );
+    mymusic->setLoop(true);
+    audio->playMusic(std::move(mymusic));
 
 }
 

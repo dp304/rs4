@@ -33,18 +33,10 @@ class IStream
     virtual void onOpenr() = 0;
     virtual void onOpenw() = 0;
     virtual void onClose() = 0;
-    virtual long long onTell() { return -1; }
-    virtual long long onSkip(long long num)
-    {
-        char c;
-        long long i=0;
-        while (i < num && read(&c, sizeof(char), 1) == 1)
-            i++;
-        return i;
-    }
-    virtual void onRewind() { close(); openr(); }
     virtual std::size_t onRead(void * buf, std::size_t siz, std::size_t num) = 0;
     virtual std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) = 0;
+    virtual long long onTell() { return -1; }
+    virtual bool onSeek(long long offset, int whence) { return false; }
 protected:
     void setSize(long long siz) { _size = siz; }
 public:
@@ -75,8 +67,8 @@ public:
     bool eof() const { assert(_readable); return _eof; }
     long long size() const { assert(_readable); return _size; }
     long long tell() { assert(_readable); return onTell(); }
-    long long skip(long long num) { assert(_readable); return onSkip(num); }
-    void rewind() { assert(_readable); onRewind(); }
+    bool seek(long long offset, int whence) { assert(_readable); return onSeek(offset, whence); }
+    void rewind() { assert(_readable); if (!seek(0,SEEK_SET)) {close(); openr();} }
     std::size_t read(void * buf, std::size_t siz, std::size_t num)
     {
         assert(_readable);
@@ -120,8 +112,7 @@ class StreamNull : public IStream
     void onOpenw() final { }
     void onClose() final { }
     long long onTell() final { return 0; }
-    long long onSkip(long long) { return 0; }
-    void onRewind() final { }
+    bool onSeek(long long, int) final { return 0; }
     std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
     {
         return 0;
@@ -145,14 +136,14 @@ private:
     void onOpenw() final { assert(false&&"StreamMem can only read memory"); }
     void onClose() final { }
     long long onTell() final { return _i; }
-    long long onSkip(long long num)
+    bool onSeek(long long offset, int whence) final
     {
-        if (_i + num >= _bufSiz)   // TODO '>' ?
-            num = _bufSiz - _i;
-        _i += num;
-        return num;
+        std::size_t from = (whence==SEEK_CUR ? _i : (whence==SEEK_END ? _bufSiz : 0) );
+        _i = from + offset;
+        if (_i < 0) _i = 0;
+        else if (_i > _bufSiz) _i = _bufSiz;
+        return true;
     }
-    void onRewind() final { _i = 0; }
     std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final
     {
         if (_i + num * siz >= _bufSiz)   // TODO '>' ?
@@ -807,6 +798,8 @@ public:
     virtual void render(float alpha) = 0;
 
     virtual const char * debugName() const { return "UNNAMED_STATE"; }
+
+    virtual ~IScreen() {}
 
 private:
     virtual void onStart() = 0;

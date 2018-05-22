@@ -14,6 +14,9 @@ fullscreen_mode = 0
 resolution_x = 800
 resolution_y = 600
 sound = 1
+music = 1
+master_volume = 100
+music_volume = 50
 )";
 
 static const rs4::Meta meta =

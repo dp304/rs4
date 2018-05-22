@@ -51,8 +51,8 @@ public:
 private:
     void onStart() final {control.start();}
     void onStop() final {}
-    void onPause() final {}
-    void onUnpause() final {control.unpause();}
+    void onPause() final {sound.pause();}
+    void onUnpause() final {sound.unpause(); control.unpause();}
 
 };
 

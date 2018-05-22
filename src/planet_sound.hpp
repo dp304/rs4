@@ -47,6 +47,8 @@ class SoundPlanet<rs4::AudioAL>
 public:
     SoundPlanet(rs4::AudioAL * audio, rs4::Game * g, World * w);
     void update(int dt);
+    void pause() { audio->pauseMusic(); }
+    void unpause() { audio->resumeMusic(); }
     template<class TEvent> void onEvent(const TEvent &) {}
     ~SoundPlanet();
 };

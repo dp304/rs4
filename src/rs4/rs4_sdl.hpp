@@ -41,7 +41,7 @@ public:
     {
         oldClock = SDL_GetTicks();
     }
-    void sleep(unsigned long t)
+    static void sleep(unsigned long t)
     {
         SDL_Delay(t);
     }
@@ -112,28 +112,9 @@ private:
         return SDL_RWtell(rwops);
     }
 
-    long long onSkip(long long num)
+    bool onSeek(long long offset, int whence) final
     {
-        long long p0, p1;
-        p0 = SDL_RWtell(rwops);
-        if (p0 == -1)
-            throw std::runtime_error(std::string("Error determining position in \"") + _name + "\": "
-                                     + SDL_GetError());
-        p1 = SDL_RWseek(rwops, num, RW_SEEK_CUR);
-
-        if (p1 == -1)
-            throw std::runtime_error(std::string("Error seeking in \"") + _name + "\": " + SDL_GetError());
-
-        return p1-p0;
-    }
-
-    void onRewind() final
-    {
-        if (SDL_RWseek(rwops, 0, RW_SEEK_SET) < 0)
-        {
-            close();
-            openr();
-        }
+        return (SDL_RWseek(rwops, offset, whence) != -1);
     }
 
     std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final

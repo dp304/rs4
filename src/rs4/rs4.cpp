@@ -1,9 +1,13 @@
 #include "rs4.hpp"
+#include "rs4_sdlglal.hpp"
 
 #define STBI_ONLY_PNG
 #define STBI_NO_STDIO
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+
+#include <vorbis/codec.h>
+#include <vorbis/vorbisfile.h>
 
 namespace rs4
 {
@@ -21,7 +25,8 @@ std::shared_ptr<LDImage> LDImage::load(IStream * stream, const char * path)
     cbs.skip = [](void * user, int n) -> void
         {
             IStream * s = reinterpret_cast<IStream*>(user);
-            s->skip(n);
+            if (! s->seek(n, SEEK_CUR))
+                throw std::runtime_error("Failed to skip in image stream");
         };
     cbs.eof = [](void * user) -> int
         {
@@ -110,5 +115,102 @@ std::shared_ptr<LDSound> LDSound::load(IStream * stream, const char * path)
 
     return sp;
 }
+
+class StreamMusicVorbis : public StreamMusic
+{
+    OggVorbis_File ovf;
+    ov_callbacks cbs;
+
+    void onOpenr() final;
+    void onOpenw() final { throw std::runtime_error("StreamMusicVorbis cannot be opened for writing"); }
+    void onClose() final;
+    std::size_t onRead(void * buf, std::size_t siz, std::size_t num) final;
+    std::size_t onWrite(const void * buf, std::size_t siz, std::size_t num) final { return 0; }
+    //long long onTell() final;
+    //bool onSeek(long long offset, int whence) final;
+public:
+    StreamMusicVorbis(std::unique_ptr<IStream> && src);
+    ~StreamMusicVorbis();
+};
+
+StreamMusicVorbis::StreamMusicVorbis(std::unique_ptr<IStream> && src):
+    StreamMusic{std::move(src)}
+{
+    cbs.read_func = [](void *ptr, size_t size, size_t nmemb, void *datasource) -> size_t
+        {
+            IStream * s = reinterpret_cast<IStream*>(datasource);
+            return s->read(ptr, size, nmemb);
+        };
+    cbs.seek_func = [](void *datasource, ogg_int64_t offset, int whence) -> int
+        {
+            IStream * s = reinterpret_cast<IStream*>(datasource);
+            if (s->seek(offset, whence))
+                return 0;
+            return -1;
+        };
+    cbs.tell_func = [](void *datasource) -> long
+        {
+            IStream * s = reinterpret_cast<IStream*>(datasource);
+            return s->tell();
+        };
+    cbs.close_func = [](void *datasource) -> int
+        {
+            IStream * s = reinterpret_cast<IStream*>(datasource);
+            s->close();
+            return 0;
+        };
+}
+
+void StreamMusicVorbis::onOpenr()
+{
+    source_stream->openr();
+    if (ov_open_callbacks(source_stream.get(), &ovf, nullptr, 0, cbs))
+        throw std::runtime_error("Failed to open Ogg Vorbis stream");
+    vorbis_info * ovi = ov_info(&ovf, -1);
+    channels = ovi->channels;
+    rate = ovi->rate;
+    // TODO setSize()
+    sample_size = 2;
+}
+
+void StreamMusicVorbis::onClose()
+{
+    ov_clear(&ovf);
+    channels = rate = sample_size = -1;
+}
+
+std::size_t StreamMusicVorbis::onRead(void * buf, std::size_t siz, std::size_t num)
+{
+    int bitstream;
+    std::size_t n_start = 0;
+    std::size_t n_remaining = num*siz;
+    std::size_t n_got;
+    do
+    {
+        n_got = ov_read(&ovf, (char*)buf+n_start, n_remaining, 0, 2, 1, &bitstream);
+
+        if ( n_got==0 && (!loop || ov_raw_seek_lap(&ovf, 0)!=0) )
+            return n_start / siz;
+
+        n_start += n_got;
+        n_remaining -= n_got;
+    }
+    while (n_remaining>0);
+    return n_start / siz; //FAKE!
+
+}
+
+StreamMusicVorbis::~StreamMusicVorbis()
+{
+    if (isOpen()) close();
+}
+
+std::unique_ptr<StreamMusic> makeStreamMusicVorbis(std::unique_ptr<IStream> && stream)
+{
+    std::unique_ptr<StreamMusic> res = std::make_unique<StreamMusicVorbis>(std::move(stream));
+    return std::move(res);
+}
+
+
 
 } // namespace rs4

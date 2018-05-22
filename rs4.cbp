@@ -42,6 +42,8 @@
 			<Add library="GL" />
 			<Add library="GLEW" />
 			<Add library="openal" />
+			<Add library="vorbisfile" />
+			<Add library="pthread" />
 		</Linker>
 		<Unit filename="src/component.hpp" />
 		<Unit filename="src/event.hpp" />
