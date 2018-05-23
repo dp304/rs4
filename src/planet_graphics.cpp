@@ -172,7 +172,7 @@ void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
     // ENEMIES
-    auto view = world->registry.persistent<Position, Velocity, Colour, Monster>();
+	auto view = world->registry.view<Position, Velocity, Colour, Monster>(entt::persistent_t{});
 
     for(auto entity: view)
     {
@@ -209,7 +209,7 @@ void GraphicsPlanet<rs4::VideoTest>::render(float alpha)
 {
     //std::size_t idxBufOld = 1 - idxBuf;
 
-    auto view = world->registry.persistent<Position, Velocity, Colour>();
+	auto view = world->registry.view<Position, Velocity, Colour>(entt::persistent_t{});
 
     int count=0;
     for(auto entity: view)

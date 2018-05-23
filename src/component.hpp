@@ -4,6 +4,7 @@
 struct Position
 {
     struct {float x, y;} buf[2];
+	Position(float x0, float y0) :buf{ {x0,y0}, {x0,y0} } {}
 };
 
 struct Velocity

@@ -19,13 +19,22 @@ master_volume = 100
 music_volume = 50
 )";
 
-static const rs4::Meta meta =
+/*static const rs4::Meta meta =
 {
     title : "Planet Storm 18",
     version : "0.0"
-};
+};*/
 
-int main() {
+static rs4::Meta meta;
+
+//??
+#ifdef _WIN32
+#undef main
+#endif
+
+int main(int argc, char** argv) {
+	meta.title = "Planet Storm 18";
+	meta.version = "0.0";
 
     try
     {

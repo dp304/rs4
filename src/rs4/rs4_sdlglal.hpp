@@ -16,8 +16,8 @@
 namespace rs4
 {
 
-class PlatformSDLGLAL;
-class AudioAL;
+struct PlatformSDLGLAL;
+struct AudioAL;
 
 struct PlatformSDLGLAL
 {
@@ -134,7 +134,7 @@ struct AudioAL
                 }
          );
 
-        thr_music = std::thread(&AudioAL::runMusicThread, this, 2000);
+        thr_music = std::thread(&AudioAL::runMusicThread, this, 200);
 
     }
     ~AudioAL()

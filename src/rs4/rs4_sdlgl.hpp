@@ -22,8 +22,8 @@ extern const unsigned char texture_data[3][64*64*4];
 
 
 
-class PlatformSDLGL;
-class VideoSDLGL;
+struct PlatformSDLGL;
+struct VideoSDLGL;
 
 struct PlatformSDLGL
 {
@@ -117,10 +117,10 @@ struct VideoSDLGL
             {
                 dm.refresh_rate = 0;
                 dm.driverdata = nullptr;
-                modes.push_back(Mode{.name = std::to_string(dm.w)+
+                modes.push_back(Mode{/*.name =*/ std::to_string(dm.w)+
                                              "x"+
                                              std::to_string(dm.h),
-                                    .displaymode = dm
+                                    /*.displaymode =*/ dm
                                     }
                                 );
             }

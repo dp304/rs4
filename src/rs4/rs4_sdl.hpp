@@ -11,12 +11,12 @@ namespace rs4
 extern const unsigned char pcm_samples[];
 extern const int pcm_samples_len;
 
-class PlatformSDL;
+struct PlatformSDL;
 class ClockSDL;
-class DiskSDL;
-class AudioSDL;
-class VideoSDL;
-class InputSDL;
+struct DiskSDL;
+struct AudioSDL;
+struct VideoSDL;
+struct InputSDL;
 
 class StreamSDLFile;
 
@@ -170,11 +170,16 @@ struct DiskSDL
         for(char c : game->meta.title)
             if (isalnum(c)) path2.push_back(c);
 
+#ifdef _WIN32
+		// Let Windows write the config file into the directory of the executable
+		pref_path = base_path;
+#else
         const char * pp = SDL_GetPrefPath(path1.c_str(), path2.c_str());
         if (pp == nullptr)
             pref_path = bp;
         else
             pref_path = pp;
+#endif
 
         fprintf(stderr, "Base path: %s\nPref path: %s\n",base_path.c_str(),pref_path.c_str());
 

@@ -139,7 +139,7 @@ private:
     bool onSeek(long long offset, int whence) final
     {
         std::size_t from = (whence==SEEK_CUR ? _i : (whence==SEEK_END ? _bufSiz : 0) );
-        _i = from + offset;
+        _i = from + (std::size_t)offset;
         if (_i < 0) _i = 0;
         else if (_i > _bufSiz) _i = _bufSiz;
         return true;
@@ -274,7 +274,7 @@ struct LDText: public ILoadedData
 
         ldp->txt.resize((std::size_t)siz);
 
-        stream->read((void*)(ldp->txt.data()), 1, siz);
+        stream->read((void*)(ldp->txt.data()), 1, (std::size_t)siz);
 
         return ldp;
     }
@@ -314,8 +314,8 @@ class ConfigValue
 
     std::list<std::function<void(const ConfigValue &)> > callbacks;
 
-    ConfigValue(int val):type{INTEGER},value{.i=val} {}
-    ConfigValue(float val):type{FLOAT},value{.f=val} {}
+	ConfigValue(int val):type{INTEGER} { value.i = val; }
+	ConfigValue(float val):type{FLOAT} { value.f = val; }
     ConfigValue(const std::string & val):type{STRING},value_s{val} {}
 
     void notifyAll()
@@ -398,7 +398,7 @@ class Config
                   || (value.find_first_not_of("0123456789.",0) == std::string::npos) )
         {
             // FLOAT VALUE
-            int vf = std::stof(value);
+            float vf = std::stof(value);
             store[key].set(vf);
         }
         else
@@ -518,7 +518,7 @@ public:
 
 // DEFAULT PLATFORM
 
-class PlatformTest;
+struct PlatformTest;
 class ClockTest;
 class DiskTest;
 class AudioTest;
@@ -602,7 +602,7 @@ public:
     {
         unsigned long t;
         int updates_left;
-        double alpha;
+        float alpha;
 
         assert(!running&&"Re-entry into loop");
         running = true;
@@ -640,7 +640,7 @@ public:
                 t = Tdt;
             }
 
-            alpha = (double)t/Tdt;
+            alpha = (float)t/Tdt;
             machine.render(alpha);
         }
         while (true);

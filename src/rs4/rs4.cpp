@@ -108,7 +108,7 @@ std::shared_ptr<LDSound> LDSound::load(IStream * stream, const char * path)
     if (fsiz != -1 && fsiz != len + 44)
         throw std::runtime_error("Invalid size of WAV data");
 
-    sp->samples.resize(len);
+    sp->samples.resize((std::size_t)len);
 
     if (stream->read(&sp->samples[0], sizeof(char), sp->samples.size()) != sp->samples.size())
         throw std::runtime_error("Unexpected end of stream reading WAV data");
@@ -151,7 +151,7 @@ StreamMusicVorbis::StreamMusicVorbis(std::unique_ptr<IStream> && src):
     cbs.tell_func = [](void *datasource) -> long
         {
             IStream * s = reinterpret_cast<IStream*>(datasource);
-            return s->tell();
+            return (long)(s->tell());
         };
     cbs.close_func = [](void *datasource) -> int
         {

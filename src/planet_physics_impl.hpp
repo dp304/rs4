@@ -8,15 +8,15 @@ PhysicsPlanet<TCaster>::PhysicsPlanet(TCaster * c, rs4::Game * g, World * w)
         :caster(c),world(w)
 {
 
-    entt::DefaultRegistry::entity_type ent =
-        world->registry.create(
-            Position{{{0,0},{0,0}}},
-            Velocity{0,0},
-            Colour{255,255,255},
-            Health{30,30}
-            );
-    world->registry.attach<Player>(ent);
-    world->registry.attach<Camera>(ent, Camera{2.0f, 0.0f});
+	entt::DefaultRegistry::entity_type ent =
+		world->registry.create();
+	world->registry.assign<Position>(ent, 0.0f, 0.0f);
+	world->registry.assign<Velocity>(ent, 0.0f, 0.0f);
+	world->registry.assign<Colour>(ent, 255, 255, 255);
+	world->registry.assign<Health>(ent, 30, 30);
+    
+	world->registry.assign<Player>(entt::tag_t{}, ent);
+    world->registry.assign<Camera>(entt::tag_t{}, ent, Camera{2.0f, 0.0f});
     //Camera & cam = world->registry.get<Camera>();
     //cam.distance = 2.0f;
     //cam.x = 0.0f;
@@ -26,25 +26,25 @@ PhysicsPlanet<TCaster>::PhysicsPlanet(TCaster * c, rs4::Game * g, World * w)
         float x, y;
         do
         {
-            x = (float)rd()/rd.max()*1.6-0.8;
-            y = (float)rd()/rd.max()*1.6-0.8;
+            x = (float)rd()/rd.max()*1.6f-0.8f;
+            y = (float)rd()/rd.max()*1.6f-0.8f;
         }
         while (glm::abs(x)<0.5f && glm::abs(y)<0.5f);
 
-        float vx = (float)rd()/rd.max()*0.8-0.4, vy = (float)rd()/rd.max()*0.8-0.4;
+        float vx = (float)rd()/rd.max()*0.8f-0.4f, vy = (float)rd()/rd.max()*0.8f-0.4f;
         //float x = 25, y = 25+i*20;
         //float vx = (float)(i+1)*20, vy = 0.0f;
         int r, g = rd()%255, b = rd()%255;
         r = 127; //glm::min(g,b);
         //int r = 255, g = 255, b = 255;
         /*entt::DefaultRegistry::entity_type ent =*/
-            world->registry.create(
-                Position{{{x,y},{x,y}}},
-                Velocity{vx,vy},
-                Colour{r,g,b},
-                Health{10,10},
-                Monster{true}
-                );
+		entt::DefaultRegistry::entity_type ent_mons =
+			world->registry.create();
+		world->registry.assign<Position>(ent_mons, x, y);
+		world->registry.assign<Velocity>(ent_mons, vx, vy);
+		world->registry.assign<Colour>(ent_mons, r, g, b);
+		world->registry.assign<Health>(ent_mons, 10, 10);
+		world->registry.assign<Monster>(ent_mons, true);
 
     }
 
@@ -70,7 +70,7 @@ void PhysicsPlanet<TCaster>::update(int dt) {
     Health &phealth = world->registry.get<Health>(pent);
 
 
-    auto view = world->registry.persistent<Position, Velocity, Colour, Health>();
+	auto view = world->registry.view<Position, Velocity, Colour, Health>(entt::persistent_t{});
 
     for(auto entity: view)
     {
@@ -98,10 +98,10 @@ void PhysicsPlanet<TCaster>::update(int dt) {
 
         }
 
-        coll = collide(p.buf[i0].x,p.buf[i1].x,v.vx,-1.9)||coll;
-        coll = collide(p.buf[i0].x,p.buf[i1].x,v.vx,1.9)||coll;
-        coll = collide(p.buf[i0].y,p.buf[i1].y,v.vy,-0.9)||coll;
-        coll = collide(p.buf[i0].y,p.buf[i1].y,v.vy,0.9)||coll;
+        coll = collide(p.buf[i0].x,p.buf[i1].x,v.vx,-1.9f)||coll;
+        coll = collide(p.buf[i0].x,p.buf[i1].x,v.vx,1.9f)||coll;
+        coll = collide(p.buf[i0].y,p.buf[i1].y,v.vy,-0.9f)||coll;
+        coll = collide(p.buf[i0].y,p.buf[i1].y,v.vy,0.9f)||coll;
 
         if (coll)
         {
