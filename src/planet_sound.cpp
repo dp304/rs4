@@ -84,6 +84,25 @@ void SoundPlanet<rs4::AudioAL>::update(int dt)
     alListenerfv(AL_ORIENTATION,listenerOri);
 }
 
+void SoundPlanet<rs4::AudioAL>::pause()
+{
+    audio->pauseMusic();
+    alSourcePause(alss[0]);
+}
+
+void SoundPlanet<rs4::AudioAL>::unpause()
+{
+    ALint snd_state;
+    alGetSourcei(alss[0], AL_SOURCE_STATE, &snd_state);
+    if (snd_state == AL_PAUSED)
+        alSourcePlay(alss[0]);
+
+    if (audio->isMusicPaused())
+        audio->resumeMusic();
+    else if (audio->music_on)
+        audio->playMusic();
+}
+
 SoundPlanet<rs4::AudioAL>::~SoundPlanet()
 {
     alDeleteSources(1, alss);
@@ -93,7 +112,9 @@ SoundPlanet<rs4::AudioAL>::~SoundPlanet()
 template<>
 void SoundPlanet<rs4::AudioAL>::onEvent<EventCollision>(const EventCollision & event)
 {
+    if (!audio->sound_on) return;
     ALfloat srcPos[] = {event.x, event.y, 0.0};
     alSourcefv(alss[0], AL_POSITION, srcPos);
+    alSourcef(alss[0], AL_GAIN, audio->gain_sound);
     alSourcePlay(alss[0]);
 }

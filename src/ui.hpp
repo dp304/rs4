@@ -22,7 +22,10 @@ struct UIMenu
 
     nk_colorf bg;
     int sound;
-    int music_volume;
+    int music;
+    int volume_master;
+    int volume_sound;
+    int volume_music;
     int fullscreen;
     int fullscreen_mode;
     std::vector<const char *> mode_labels = {"desktop"};
@@ -31,10 +34,14 @@ struct UIMenu
 
     UIMenu(rs4::VideoSDLGL * v, rs4::Config * c):video{v},config{c}
     {
-        config->subscribe("sound", &sound);
+
         config->subscribe("fullscreen", &fullscreen);
         config->subscribe("fullscreen_mode", &fullscreen_mode);
-        config->subscribe("music_volume", &music_volume);
+        config->subscribe("sound", &sound);
+        config->subscribe("music", &music);
+        config->subscribe("volume_master", &volume_master);
+        config->subscribe("volume_sound", &volume_sound);
+        config->subscribe("volume_music", &volume_music);
 
         for (const auto & it : video->modes)
         {
@@ -73,7 +80,7 @@ struct UIMenu
 
     void update()
     {
-        if (nk_begin(context, "Menü", nk_rect(200, 50, 400, 250),
+        if (nk_begin(context, "Menü", nk_rect(200, 50, 400, 300),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
         {
@@ -82,14 +89,29 @@ struct UIMenu
             static int property = 20;
 
             nk_layout_row_dynamic(context, 30, 2);
+            nk_label(context, "Master volume", NK_TEXT_LEFT);
+            nk_size volume_master_nks = volume_master;
+            if (nk_progress(context, &volume_master_nks, 100, NK_MODIFIABLE))
+            {
+                config->set("volume_master", (int)volume_master_nks);
+            }
             if (nk_checkbox_label(context, "Sound", &sound))
             {
                 config->set("sound", sound);
             }
-            nk_size music_volume_nks = music_volume;
-            if (nk_progress(context, &music_volume_nks, 100, NK_MODIFIABLE))
+            nk_size volume_sound_nks = volume_sound;
+            if (nk_progress(context, &volume_sound_nks, 100, NK_MODIFIABLE))
             {
-                config->set("music_volume", (int)music_volume_nks);
+                config->set("volume_sound", (int)volume_sound_nks);
+            }
+            if (nk_checkbox_label(context, "Music", &music))
+            {
+                config->set("music", music);
+            }
+            nk_size volume_music_nks = volume_music;
+            if (nk_progress(context, &volume_music_nks, 100, NK_MODIFIABLE))
+            {
+                config->set("volume_music", (int)volume_music_nks);
             }
 
             if (nk_checkbox_label(context, "Full screen", &fullscreen))

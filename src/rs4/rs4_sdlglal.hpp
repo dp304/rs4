@@ -74,6 +74,9 @@ struct AudioAL
     ALCdevice * device = nullptr;
     ALCcontext * context = nullptr;
 
+    bool sound_on, music_on;
+    float gain_master, gain_music, gain_sound;
+
     static const char * getError(ALenum e)
     {
         switch (e)
@@ -127,10 +130,39 @@ struct AudioAL
         alGenSources(1, &music_source);
         handleError("failed to generate music source");
 
-        game->config.subscribe("music_volume",
+        game->config.subscribe("sound",
                 [this](const ConfigValue & val)
                 {
-                    alSourcef(music_source, AL_GAIN, val.getI()/100.0f);
+                    sound_on = (val.getI()!=0);
+                }
+         );
+        game->config.subscribe("music",
+                [this](const ConfigValue & val)
+                {
+                    music_on = (val.getI()!=0);
+                    if (!music_on)
+                        stopMusic();
+                }
+         );
+        game->config.subscribe("volume_master",
+                [this](const ConfigValue & val)
+                {
+                    gain_master = val.getI()/100.0f;
+                    alListenerf(AL_GAIN, gain_master);
+                }
+         );
+        game->config.subscribe("volume_music",
+                [this](const ConfigValue & val)
+                {
+                    gain_music = val.getI()/100.0f;
+                    alSourcef(music_source, AL_GAIN, gain_music);
+                }
+         );
+        game->config.subscribe("volume_sound",
+                [this](const ConfigValue & val)
+                {
+                    gain_sound = val.getI()/100.0f;
+                    //alListenerf(AL_GAIN, gain_sound);
                 }
          );
 
@@ -196,6 +228,13 @@ struct AudioAL
     void resumeMusic()
     {
         sendMusicCommand(MC_RESUME, nullptr);
+    }
+
+    bool isMusicPaused() const
+    {
+        ALint source_state;
+        alGetSourcei(music_source, AL_SOURCE_STATE, &source_state);
+        return source_state == AL_PAUSED;
     }
 
 private:
