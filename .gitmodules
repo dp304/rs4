@@ -1,0 +1,14 @@
+[submodule "external/stb"]
+	path = external/stb
+	url = https://github.com/nothings/stb.git
+[submodule "external/entt"]
+	path = external/entt
+	url = https://github.com/skypjack/entt.git
+[submodule "external/glm"]
+	path = external/glm
+	url = https://github.com/g-truc/glm.git
+	#branch = 0.9.9.3
+	shallow = true
+[submodule "external/nuklear"]
+	path = external/nuklear
+	url = https://github.com/vurtun/nuklear.git
