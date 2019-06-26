@@ -39,15 +39,15 @@
 
     * all operating systems:
 
-     ```bash
-     # generate default profile detecting GCC and set old ABI:
-     conan profile new default --detect
-     conan profile update
-     # set libcxx to C++11 ABI:
-     settings.compiler.libcxx=libstdc++11 default
-     # add bincrafters repository:
-     conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-     ```
+      ```bash
+      # generate default profile detecting GCC and set old ABI:
+      conan profile new default --detect
+      conan profile update
+      # set libcxx to C++11 ABI:
+      settings.compiler.libcxx=libstdc++11 default
+      # add bincrafters repository:
+      conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+      ```
 
 1. Install dependencies
 
@@ -72,31 +72,31 @@
 
     * Linux:
 
-    ```bash
-    cd src/bin
-    cp -rp <path_to_data_dir>/data .
-    ```
+      ```bash
+      cd src/bin
+      cp -rp <path_to_data_dir>/data .
+      ```
 
     * Windows:
 
-    ```cmd
-    cd src\bin
-    xcopy <path_to_data_dir>\data . /O /X /E /H /K
-    ```
+      ```cmd
+      cd src\bin
+      xcopy <path_to_data_dir>\data . /O /X /E /H /K
+      ```
 
 1. Run
 
     * Linux:
 
-    ```bash
-    ./rs4game
-    ```
+      ```bash
+      ./rs4game
+      ```
 
     * Windows:
 
-    ```cmd
-    rs4game.exe
-    ```
+      ```cmd
+      rs4game.exe
+      ```
 
 1. Have fun!
 
