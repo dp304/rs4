@@ -129,7 +129,7 @@ void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha)
     glm::mat4 m_view(1.0f);
     glm::mat4 m_projection = glm::perspective(glm::radians(45.0f), video->aspect, 0.1f, 100.0f);
 
-    Camera &cam = world->registry.get<Camera>();
+    Camera &cam = world->registry.get<Camera>(world->player_entity);
 
     m_view = glm::translate(m_view, glm::vec3(-cam.x, 0.0f ,-cam.distance));
     m_view = glm::rotate(m_view, glm::radians(-30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -147,7 +147,7 @@ void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
     // PLAYER
-    auto pent = world->registry.attachee<Player>();
+    const auto pent = world->player_entity;
     Position &pp = world->registry.get<Position>(pent);
     Colour &pc = world->registry.get<Colour>(pent);
     Velocity &pv = world->registry.get<Velocity>(pent);
@@ -172,7 +172,7 @@ void GraphicsPlanet<rs4::VideoSDLGL>::render(float alpha)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
     // ENEMIES
-	auto view = world->registry.view<Position, Velocity, Colour, Monster>(entt::persistent_t{});
+    auto view = world->registry.view<Position, Velocity, Colour, Monster>();
 
     for(auto entity: view)
     {
@@ -209,7 +209,7 @@ void GraphicsPlanet<rs4::VideoTest>::render(float alpha)
 {
     //std::size_t idxBufOld = 1 - idxBuf;
 
-	auto view = world->registry.view<Position, Velocity, Colour>(entt::persistent_t{});
+    auto view = world->registry.view<Position, Velocity, Colour>();
 
     int count=0;
     for(auto entity: view)

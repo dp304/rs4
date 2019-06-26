@@ -1,0 +1,12 @@
+[requires]
+sdl2/2.0.9@bincrafters/stable
+openal/1.19.0@bincrafters/stable
+glew/2.1.0@bincrafters/stable
+glm/0.9.9.4@g-truc/stable
+vorbis/1.3.6@bincrafters/stable
+#nuklear
+stb/20190512@conan/stable
+entt/3.0.0@skypjack/stable
+
+[generators]
+cmake

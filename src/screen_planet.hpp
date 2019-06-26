@@ -67,8 +67,6 @@ ScreenPlanet<TPlatform, TMachine>::ScreenPlanet(TPlatform * platform, TMachine *
         sound(platform->audio, game, world),
         graphics(platform->video, game, world)
 {
-    world->registry.prepare<Position,Velocity,Colour,Health>();
-    world->registry.prepare<Position,Velocity,Colour>();
 }
 
 

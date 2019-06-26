@@ -72,9 +72,10 @@ SoundPlanet<rs4::AudioAL>::SoundPlanet(rs4::AudioAL * a, rs4::Game * g, World * 
 
 void SoundPlanet<rs4::AudioAL>::update(int dt)
 {
-    if (!world->registry.has<Camera>())
+    const auto pent = world->player_entity;
+    if (!world->registry.valid(pent))
         return;
-    Camera &cam = world->registry.get<Camera>();
+    Camera &cam = world->registry.get<Camera>(pent);
     ALfloat listenerPos[]={cam.x, 0.0, cam.distance};
     //ALfloat listenerVel[]={0.0, 0.0, 0.0};
     ALfloat listenerOri[]={0.0, 0.0, -1.0, 0.0, 1.0, 0.0};

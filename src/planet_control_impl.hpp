@@ -4,7 +4,7 @@
 template<class TCaster>
 void ControlPlanet<rs4::InputSDL, TCaster>::update()
 {
-    Player &p = world->registry.get<Player>();
+    Player &p = world->registry.get<Player>(world->player_entity);
     p.clear();
 
     if (input->keyPressed[SDL_SCANCODE_ESCAPE])
