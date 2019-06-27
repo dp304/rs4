@@ -23,12 +23,33 @@
       sudo apt-get install g++ cmake automake
       ```
 
+    * Windows:
+
+      * Install [Visual Studio 2019 Community](https://visualstudio.microsoft.com/vs/)
+
+        * MinGW g++ (>=7) might also work instead of VS
+
+      * Install the [latest stable CMake](https://cmake.org/download/)
+
+        * Select "Add CMake to the system PATH" (for current user or all users) at installation
+
 1. Install Conan
 
-    * Debian/Ubuntu using pip:
+    * Installing with pip is recommended
+
+      * Debian/Ubuntu: get Python 3 and pip
+
+        ```bash
+        sudo apt-get install python3-pip
+        ```
+
+      * Windows: install the [latest Python](https://www.python.org/downloads/), which comes with pip
+
+        * Select "Add Python 3.x to PATH" at installation
+
+    * all operating systems: install Conan with pip
 
       ```bash
-      sudo apt-get install python3-pip
       # optionally create and activate a venv:
       # python -m venv ./venv
       # . ./venv/bin/activate
@@ -40,11 +61,10 @@
     * all operating systems:
 
       ```bash
-      # generate default profile detecting GCC and set old ABI:
+      # generate default profile:
       conan profile new default --detect
-      conan profile update
-      # set libcxx to C++11 ABI:
-      settings.compiler.libcxx=libstdc++11 default
+      # only if using gcc: set libcxx to C++11 ABI:
+      conan profile update settings.compiler.libcxx=libstdc++11 default
       # add bincrafters repository:
       conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
       ```
@@ -56,7 +76,7 @@
       ```bash
       mkdir build
       cd build
-      conan install ..
+      conan install .. --build=missing
       ```
 
 1. Build
@@ -81,7 +101,7 @@
 
       ```cmd
       cd src\bin
-      xcopy <path_to_data_dir>\data . /O /X /E /H /K
+      xcopy <path_to_data_dir>\data .\data /I /E /K /H
       ```
 
 1. Run
