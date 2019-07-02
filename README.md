@@ -12,15 +12,15 @@
       git submodule update --init --recursive
       ```
 
-1. Install C++17 compatible compiler and CMake >=3.10.2 (and automake)
+1. Install C++17 compatible compiler and CMake >=3.10.2 (and libtool)
 
     * Debian/Ubuntu:
 
       ```bash
       sudo apt-get update
       # g++ >=7 should work
-      # automake is possibly needed for building dependencies
-      sudo apt-get install g++ cmake automake
+      # libtool is possibly needed for building dependencies
+      sudo apt-get install g++ cmake libtool
       ```
 
     * Windows:
@@ -51,9 +51,9 @@
 
       ```bash
       # optionally create and activate a venv:
-      # python -m venv ./venv
+      # python3 -m venv ./venv
       # . ./venv/bin/activate
-      pip install conan
+      pip3 install conan
       ```
 
 1. Set up Conan

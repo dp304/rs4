@@ -243,7 +243,7 @@ public:
     {
         return static_cast<TLoadedData*>(_ptr.get());  // Downcast!
     }
-    bool isLoaded() { return _ptr; }
+    bool isLoaded() { return _ptr != nullptr; }
     void load(const char * path)
     {
         if (_ptr) return;
